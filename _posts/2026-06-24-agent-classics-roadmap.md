@@ -1,7 +1,7 @@
 ---
 title: Agent 经典与工程实践图谱：从 ReAct 到可靠性评测
 date: 2026-06-24 16:30:00 +0800
-categories: [学习笔记, Agent]
+categories: [学习笔记, Agent 笔记]
 tags: [LLM Agent, ReAct, Tool Use, MCP, Agent Evaluation, 学习笔记]
 ---
 

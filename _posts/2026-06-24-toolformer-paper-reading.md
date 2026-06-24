@@ -1,7 +1,7 @@
 ---
 title: Toolformer 论文精读：语言模型如何通过自监督学习获得工具使用能力
 date: 2026-06-24 10:30:00 +0800
-categories: [论文阅读, Agent]
+categories: [论文阅读, Agent 论文]
 tags: [Toolformer, LLM Agent, Tool Use, Self-supervised Learning, 论文阅读]
 ---
 

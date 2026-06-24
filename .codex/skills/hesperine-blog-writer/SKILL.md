@@ -17,11 +17,13 @@ Use this skill for this repository's Chirpy/Jekyll blog.
 
 ## Categories
 
-Use `categories` as a hierarchy with up to two elements. One level is fine; do not use three or more levels. Use `tags` for parallel labels.
+Use `categories` as a hierarchy with up to two elements. One level is fine; do not use three or more levels. The first element is the parent group shown on the Categories page; the second element is its child category.
+
+Chirpy/Jekyll Archives generates category pages globally by category name. Therefore second-level category names must be unique across the whole site. Do not reuse broad names like `Agent` under multiple parents; use names such as `Agent 论文`, `Agent 笔记`, or `Agent 项目`. Use `tags` for parallel labels.
 
 Top-level categories:
 
-- `学习札记`: learning notes, concepts, course notes, and notes from reading other people's code or engineering implementations.
+- `学习笔记`: learning notes, concepts, course notes, and notes from reading other people's code or engineering implementations.
 - `论文阅读`: posts centered on papers.
 - `项目展示`: the author's own projects, demos, experiments, or portfolio writeups.
 - `实用技巧`: practical workflows, tools, account setup, environment setup, and operational notes.
@@ -30,10 +32,10 @@ Top-level categories:
 Examples:
 
 ```yaml
-categories: [论文阅读, Agent]
-categories: [学习札记, Agent]
+categories: [论文阅读, Agent 论文]
+categories: [学习笔记, Agent 笔记]
 categories: [实用技巧, 数字服务]
-tags: [ReAct, LLM Agent, Tool Use, 论文阅读]
+tags: [Agent, ReAct, LLM Agent, Tool Use, 论文阅读]
 ```
 
 ## Chirpy Docs
@@ -69,7 +71,8 @@ Minimal examples:
 - Write in Chinese by default.
 - Prefer personal blog voice over generic instruction-manual voice.
 - Avoid AI-sounding section names like `适用场景`, `不适合`, `关键风险` unless genuinely needed.
-- Classify notes about other people's engineering as `学习札记`, not `项目展示`.
+- Prefer one-level categories when the second level would be a broad field like `Agent`; put fields in `tags` to avoid duplicated category pages.
+- Classify notes about other people's engineering as `学习笔记`, not `项目展示`.
 - Classify only the author's own work as `项目展示`.
 
 ## Validation
