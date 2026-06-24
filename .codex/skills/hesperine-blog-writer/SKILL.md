@@ -1,0 +1,80 @@
+---
+name: hesperine-blog-writer
+description: Write, edit, classify, and maintain posts for the Hesperine GitHub Pages blog built with Jekyll Chirpy. Use when working on this repository's blog posts, categories, tags, Chirpy prompt blocks, post assets, post cross-links, or site writing conventions.
+---
+
+# Hesperine Blog Writer
+
+Use this skill for this repository's Chirpy/Jekyll blog.
+
+## Local Rules
+
+- Posts live in `_posts/` and use `YYYY-MM-DD-slug.md`.
+- Drafts can live in `_drafts/`.
+- Images and attachments live under `assets/`, preferably `assets/img/posts/YYYY-MM-DD-slug/`.
+- `_tabs/` is for fixed navigation pages, not ordinary posts.
+- Use lowercase ASCII slugs with hyphens, even for Chinese posts.
+
+## Categories
+
+Use `categories` as a hierarchy with up to two elements. One level is fine; do not use three or more levels. Use `tags` for parallel labels.
+
+Top-level categories:
+
+- `学习札记`: learning notes, concepts, course notes, and notes from reading other people's code or engineering implementations.
+- `论文阅读`: posts centered on papers.
+- `项目展示`: the author's own projects, demos, experiments, or portfolio writeups.
+- `实用技巧`: practical workflows, tools, account setup, environment setup, and operational notes.
+- `随笔`: loose thoughts and posts intentionally outside the above buckets.
+
+Examples:
+
+```yaml
+categories: [论文阅读, Agent]
+categories: [学习札记, Agent]
+categories: [实用技巧, 数字服务]
+tags: [ReAct, LLM Agent, Tool Use, 论文阅读]
+```
+
+## Chirpy Docs
+
+The detailed Chirpy component docs are external, not vendored in this repo. Browse them when syntax details are needed:
+
+- Writing posts, front matter, categories, tags, images, pinned posts, math, Mermaid: https://chirpy.cotes.page/posts/write-a-new-post/
+- Prompt blocks, filepath styling, typography, code blocks, visual Markdown examples: https://chirpy.cotes.page/posts/text-and-typography/
+
+Site reminders:
+
+- Current post links use `/posts/:slug/`.
+- Use `prompt-tip` for related-post links.
+- Use `prompt-warning` for unstable account/payment/platform rules.
+- Use absolute site paths for assets, such as `/assets/img/posts/example/image.png`.
+
+Minimal examples:
+
+```markdown
+> 如果还没有美区 Apple Account，可以先看前一篇：[注册美区 Apple Account](/posts/register-us-apple-account/)。
+{: .prompt-tip }
+
+> 账号地区、订阅价格和支付规则都可能变化，付款前以页面显示为准。
+{: .prompt-warning }
+
+`_posts/2026-06-24-example.md`{: .filepath }
+
+![示例图](/assets/img/posts/2026-06-24-example/screenshot.png)
+```
+
+## Style
+
+- Write in Chinese by default.
+- Prefer personal blog voice over generic instruction-manual voice.
+- Avoid AI-sounding section names like `适用场景`, `不适合`, `关键风险` unless genuinely needed.
+- Classify notes about other people's engineering as `学习札记`, not `项目展示`.
+- Classify only the author's own work as `项目展示`.
+
+## Validation
+
+- Run `git diff --check`.
+- If categories changed, run `rg -n "categories:|tags:" _posts`.
+- If Ruby/Bundler is available, run `bundle exec jekyll build`; otherwise say `bundle` is unavailable.
+- Do not stage or commit unless the user asks.

@@ -1,0 +1,7 @@
+interface:
+  display_name: "Hesperine Blog Writer"
+  short_description: "Write posts for the Hesperine Chirpy blog."
+  default_prompt: "Use $hesperine-blog-writer to draft or edit a post for my Hesperine Chirpy blog."
+
+policy:
+  allow_implicit_invocation: true
