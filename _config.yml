@@ -16,10 +16,10 @@ timezone: Asia/Shanghai
 
 title: Hesperine Blog # the main title
 
-tagline: 学习笔记、项目展示与文章摘要 # it will display as the subtitle
+tagline: 学习笔记、论文阅读与项目实践 # it will display as the subtitle
 
 description: >- # used by seo meta and the atom feed
-  记录知识学习、项目实践、摘要整理与一些随笔。
+  记录学习笔记、论文阅读、项目实践、实用技巧与一些随笔。
 
 # Fill in the protocol & hostname for your site.
 # E.g. 'https://username.github.io', note that it does not end with a '/'.
@@ -35,7 +35,7 @@ social:
   # Change to your full name.
   # It will be displayed as the default author of the posts and the copyright owner in the Footer
   name: Hesperine
-  email: example@domain.com # change to your email address
+  email: hesperine@qq.com # change to your email address
   fediverse_handle: # fill in your fediverse handle. E.g. "@username@domain.com"
   links:
     # The first element serves as the copyright owner's link
