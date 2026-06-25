@@ -2,7 +2,7 @@
 title: Agent 经典与工程实践图谱
 date: 2026-06-24 16:30:00 +0800
 categories: [学习笔记, Agent 笔记]
-tags: [LLM Agent, ReAct, Tool Use, MCP, Agent Evaluation, 学习笔记]
+tags: [Agent, LLM Agent, Agent Evaluation]
 ---
 
 我想把 Agent 近几年的经典工作整理成一个系列。不是按时间流水账把论文列完，而是先搭一张能反复回来的图谱：哪些工作定义了基本动作，哪些工作打开了分支，哪些工作改变了工程上线方式。
@@ -13,6 +13,7 @@ tags: [LLM Agent, ReAct, Tool Use, MCP, Agent Evaluation, 学习笔记]
 >
 > - [ReAct 论文阅读：把语言模型从回答器变成会行动的 Agent](/posts/react-paper-reading/)
 > - [Toolformer 论文精读：语言模型如何通过自监督学习获得工具使用能力](/posts/toolformer-paper-reading/)
+> - [Voyager 论文阅读：大语言模型智能体如何把经验沉淀成技能库](/posts/voyager-paper-reading/)
 {: .prompt-tip }
 
 ## 先限定范围
@@ -90,7 +91,7 @@ Tool-using model = LM + tool-call data + execution-time result insertion
 
 ### Voyager：技能库与开放环境
 
-[Voyager](https://arxiv.org/abs/2305.16291) 把 LLM agent 放进 Minecraft，核心不是游戏本身，而是三个组件：
+[Voyager](https://arxiv.org/abs/2305.16291) 把大语言模型智能体放进 Minecraft，核心不是游戏本身，而是三个组件：
 
 - automatic curriculum：自动提出接下来该探索什么；
 - skill library：把成功代码沉淀成可复用技能；
@@ -215,7 +216,7 @@ agent:
 | --- | --- | --- |
 | 1 | ReAct：reasoning + acting 闭环 | 已完成 |
 | 2 | Toolformer：自监督工具调用学习 | 已完成 |
-| 3 | Voyager：技能库、自动课程与游戏环境 Agent | 下一篇候选 |
+| 3 | Voyager：技能库、自动课程与游戏环境智能体 | 已完成 |
 | 4 | Generative Agents：记忆、规划、反思 | 待写 |
 | 5 | MemGPT：上下文管理作为虚拟内存 | 待写 |
 | 6 | SWE-bench：真实软件工程任务评测 | 待写 |
@@ -234,20 +235,20 @@ agent:
 
 ## 下一步先写什么
 
-我倾向于下一篇写 Voyager，而不是马上写 MCP 或综述。
+Voyager 写完以后，下一篇更适合写 Generative Agents，而不是马上写 MCP 或综述。
 
-原因是：ReAct 和 Toolformer 已经把“行动闭环”和“工具调用学习”讲完了，Voyager 正好把这两个动作放进一个长期环境里，让 Agent 通过技能库持续积累能力。它能自然引出后面的几个分支：
+原因是：ReAct 和 Toolformer 已经把“行动闭环”和“工具调用学习”讲完了，Voyager 又把这两个动作放进一个长期环境里，让智能体通过技能库持续积累能力。接下来 Generative Agents 可以自然接上另一条长期性主线：记忆、规划、反思如何支撑可置信的社会行为。
 
 ```text
-Voyager
-    -> skill library
-    -> lifelong learning
-    -> game environment
-    -> executable memory
-    -> agent 能力不只在模型参数里
+Generative Agents
+    -> memory
+    -> planning
+    -> reflection
+    -> agent society
+    -> 自然语言经验如何变成行为状态
 ```
 
-这篇写完后，再写 Generative Agents 和 MemGPT，会更顺：前者讲自然语言经验如何变成记忆与反思，后者讲上下文和长期记忆如何被 runtime 管理。
+这篇写完后，再写 MemGPT 会更顺：Generative Agents 讲自然语言经验如何变成记忆与反思，MemGPT 则讲上下文和长期记忆如何被 runtime 管理。
 
 ## 速记
 

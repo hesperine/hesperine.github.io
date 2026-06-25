@@ -2,7 +2,7 @@
 title: ReAct 论文阅读：把语言模型从回答器变成会行动的 Agent
 date: 2026-06-23 16:30:00 +0800
 categories: [论文阅读, Agent 论文]
-tags: [ReAct, LLM Agent, Chain of Thought, Tool Use, 论文阅读]
+tags: [ReAct, Agent, Chain of Thought, Tool Use]
 ---
 
 ## 原文信息
