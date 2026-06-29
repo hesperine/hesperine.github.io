@@ -2,7 +2,7 @@
 title: Generative Agents 论文阅读：记忆、反思与规划如何支撑可置信的小镇
 date: 2026-06-29 17:20:00 +0800
 categories: [论文阅读, Agent 论文]
-tags: [Agent, Generative Agents, Memory]
+tags: [Agent, Generative Agents, Agent Memory]
 ---
 
 ## 原文信息

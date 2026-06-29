@@ -75,6 +75,7 @@ Minimal examples:
 - Avoid AI-sounding section names like `适用场景`, `不适合`, `关键风险` unless genuinely needed.
 - Keep roadmap/meta-planning content out of publishable prose by default. Reading routes, why a topic follows another topic, future article plans, and similar author notes may be kept in Jekyll/Liquid comments (`{% comment %} ... {% endcomment %}`) for editing context, but should not appear as visible Blog headings, body text, or generated HTML unless the user explicitly asks.
 - Prefer one-level categories when the second level would be a broad field like `Agent`; put fields in `tags` to avoid duplicated category pages.
+- For Agent memory topics, use the tag `Agent Memory`; do not use the bare tag `Memory`.
 - Classify notes about other people's engineering as `学习笔记`, not `项目展示`.
 - Classify only the author's own work as `项目展示`.
 
