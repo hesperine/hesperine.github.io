@@ -1,6 +1,6 @@
 ---
 title: Agent Memory 与上下文压缩：长程任务里的状态管理问题
-date: 2026-06-29 22:00:00 +0800
+date: 2026-06-29 17:25:00 +0800
 categories: [学习笔记, Agent 笔记]
 tags: [Agent, Agent Memory, Context Compression, LLM Agent]
 ---
