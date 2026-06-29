@@ -1,7 +1,7 @@
 ---
 title: 从零开始理解 KMP、Z 函数和 AC 自动机
 date: 2026-06-29 11:40:00 +0800
-categories: [学习笔记]
+categories: [学习笔记, 数据结构与算法]
 tags: [字符串算法, KMP, Z函数, AC自动机]
 ---
 
