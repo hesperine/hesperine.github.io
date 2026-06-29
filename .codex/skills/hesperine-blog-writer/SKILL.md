@@ -73,7 +73,7 @@ Minimal examples:
 - For paper-reading notes, keep analytical judgments neutral unless the user explicitly states them. Avoid phrasing such as `我认为`, `我觉得`, or `我的 reviewer 视角` when the judgment is the assistant's reading; prefer `这篇论文...`, `从审稿人角度看...`, or `可以这样评价...`.
 - In publishable drafts, omit process filler such as `概读之后，这篇有必要精读`, `这篇值得精读`, or explanations that only report the reading workflow. Start with the substantive claim or evidence instead.
 - Avoid AI-sounding section names like `适用场景`, `不适合`, `关键风险` unless genuinely needed.
-- Keep roadmap/meta-planning content out of publishable prose by default. Reading routes, why a topic follows another topic, future article plans, and similar author notes may be kept in Markdown HTML comments (`<!-- ... -->`) for editing context, but should not appear as visible Blog headings or body text unless the user explicitly asks.
+- Keep roadmap/meta-planning content out of publishable prose by default. Reading routes, why a topic follows another topic, future article plans, and similar author notes may be kept in Jekyll/Liquid comments (`{% comment %} ... {% endcomment %}`) for editing context, but should not appear as visible Blog headings, body text, or generated HTML unless the user explicitly asks.
 - Prefer one-level categories when the second level would be a broad field like `Agent`; put fields in `tags` to avoid duplicated category pages.
 - Classify notes about other people's engineering as `学习笔记`, not `项目展示`.
 - Classify only the author's own work as `项目展示`.
