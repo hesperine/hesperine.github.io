@@ -9,11 +9,12 @@ tags: [Agent, LLM Agent, Agent Evaluation]
 
 这篇是系列入口。它更像学习笔记的目录和判断框架，后面每个分支再单独写精读和 citation。
 
-> 已经写完的两篇：
+> 已经写完的几篇：
 >
 > - [ReAct 论文阅读：把语言模型从回答器变成会行动的 Agent](/posts/react-paper-reading/)
 > - [Toolformer 论文精读：语言模型如何通过自监督学习获得工具使用能力](/posts/toolformer-paper-reading/)
 > - [Voyager 论文阅读：大语言模型智能体如何把经验沉淀成技能库](/posts/voyager-paper-reading/)
+> - [Generative Agents 论文阅读：记忆、反思与规划如何支撑可置信的小镇](/posts/generative-agents-paper-reading/)
 {: .prompt-tip }
 
 ## 先限定范围
@@ -108,6 +109,8 @@ memory + planning + reflection
 ```
 
 它不只是展示 25 个 agent 在 Smallville 里生活，而是把“可置信的社会行为”拆成了可工程实现的模块：观察如何进入记忆，记忆如何被检索，反思如何生成更高层抽象，计划如何驱动后续行为。
+
+单篇阅读见：[Generative Agents 论文阅读：记忆、反思与规划如何支撑可置信的小镇](/posts/generative-agents-paper-reading/)。
 
 这条线后面可以接 mem0、agent memory、personalized agent，以及各种“长期陪伴型 agent”的工程实现。
 
@@ -217,7 +220,7 @@ agent:
 | 1 | ReAct：reasoning + acting 闭环 | 已完成 |
 | 2 | Toolformer：自监督工具调用学习 | 已完成 |
 | 3 | Voyager：技能库、自动课程与游戏环境智能体 | 已完成 |
-| 4 | Generative Agents：记忆、规划、反思 | 待写 |
+| 4 | Generative Agents：记忆、规划、反思 | 已完成 |
 | 5 | MemGPT：上下文管理作为虚拟内存 | 待写 |
 | 6 | SWE-bench：真实软件工程任务评测 | 待写 |
 | 7 | MCP：Agent 工具协议层 | 待写 |
@@ -235,20 +238,7 @@ agent:
 
 ## 下一步先写什么
 
-Voyager 写完以后，下一篇更适合写 Generative Agents，而不是马上写 MCP 或综述。
-
-原因是：ReAct 和 Toolformer 已经把“行动闭环”和“工具调用学习”讲完了，Voyager 又把这两个动作放进一个长期环境里，让智能体通过技能库持续积累能力。接下来 Generative Agents 可以自然接上另一条长期性主线：记忆、规划、反思如何支撑可置信的社会行为。
-
-```text
-Generative Agents
-    -> memory
-    -> planning
-    -> reflection
-    -> agent society
-    -> 自然语言经验如何变成行为状态
-```
-
-这篇写完后，再写 MemGPT 会更顺：Generative Agents 讲自然语言经验如何变成记忆与反思，MemGPT 则讲上下文和长期记忆如何被 runtime 管理。
+Generative Agents 写完后，再写 MemGPT 会更顺：Generative Agents 讲自然语言经验如何变成记忆与反思，MemGPT 则讲上下文和长期记忆如何被 runtime 管理。
 
 ## 速记
 
