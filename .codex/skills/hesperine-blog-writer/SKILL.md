@@ -70,6 +70,7 @@ Minimal examples:
 
 - Write in Chinese by default.
 - Prefer personal blog voice over generic instruction-manual voice.
+- For paper-reading notes, keep analytical judgments neutral unless the user explicitly states them. Avoid phrasing such as `我认为`, `我觉得`, or `我的 reviewer 视角` when the judgment is the assistant's reading; prefer `这篇论文...`, `从审稿人角度看...`, or `可以这样评价...`.
 - Avoid AI-sounding section names like `适用场景`, `不适合`, `关键风险` unless genuinely needed.
 - Prefer one-level categories when the second level would be a broad field like `Agent`; put fields in `tags` to avoid duplicated category pages.
 - Classify notes about other people's engineering as `学习笔记`, not `项目展示`.
