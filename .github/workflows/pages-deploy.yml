@@ -1,4 +1,5 @@
 name: "Build and Deploy"
+# Touch this workflow to trigger a fresh Pages deployment when needed.
 on:
   push:
     branches:
