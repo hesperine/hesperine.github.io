@@ -1,6 +1,6 @@
 ---
 title: Agentopia 论文阅读：长期社会模拟如何变成训练数据
-date: 2026-06-30 20:30:00 +0800
+date: 2026-06-30 15:00:00 +0800
 categories: [论文阅读, Agent 论文]
 tags: [Agent, Agentopia, Agent Memory, Multi-Agent]
 ---

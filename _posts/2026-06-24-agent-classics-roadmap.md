@@ -13,9 +13,8 @@ tags: [Agent, LLM Agent, Agent Evaluation]
 >
 > - [ReAct 论文阅读：把语言模型从回答器变成会行动的 Agent](/posts/react-paper-reading/)
 > - [Toolformer 论文精读：语言模型如何通过自监督学习获得工具使用能力](/posts/toolformer-paper-reading/)
-> - [Voyager 论文阅读：大语言模型智能体如何把经验沉淀成技能库](/posts/voyager-paper-reading/)
 > - [Generative Agents 论文阅读：记忆、反思与规划如何支撑可置信的小镇](/posts/generative-agents-paper-reading/)
-> - [Agentopia 论文阅读：长期社会模拟如何变成训练数据](/posts/agentopia-paper-reading/)
+> - [Voyager 论文阅读：大语言模型智能体如何把经验沉淀成技能库](/posts/voyager-paper-reading/)
 {: .prompt-tip }
 
 ## 先限定范围
@@ -91,16 +90,6 @@ Tool-using model = LM + tool-call data + execution-time result insertion
 
 有了基本动作之后，下一层关心的是：Agent 如何不只做一步工具调用，而是在更长的任务里积累经验、维护记忆、规划行为、完成真实环境任务。
 
-### Voyager：技能库与开放环境
-
-[Voyager](https://arxiv.org/abs/2305.16291) 把大语言模型智能体放进 Minecraft，核心不是游戏本身，而是三个组件：
-
-- automatic curriculum：自动提出接下来该探索什么；
-- skill library：把成功代码沉淀成可复用技能；
-- iterative prompting：根据环境反馈和执行错误持续改写程序。
-
-这篇适合放在“长期能力”和“游戏环境 Agent”分支。它让我关注的是：Agent 的能力不只存在于模型参数里，也可以存在于外部技能库和可执行代码中。
-
 ### Generative Agents：记忆、规划、反思
 
 [Generative Agents](https://arxiv.org/abs/2304.03442) 的价值在于给出了一个很有影响力的心智模型：
@@ -113,15 +102,17 @@ memory + planning + reflection
 
 单篇阅读见：[Generative Agents 论文阅读：记忆、反思与规划如何支撑可置信的小镇](/posts/generative-agents-paper-reading/)。
 
-这条线后面可以接 mem0、agent memory、personalized agent，以及各种“长期陪伴型 agent”的工程实现。
+这条线后面可以接 mem0、agent memory、personalized agent，以及各种“长期陪伴型 agent”的工程实现。[Agentopia](/posts/agentopia-paper-reading/) 更适合作为这条线的延伸阅读：它把 Generative Agents 式社会模拟拉到更长时间尺度，并尝试把长期生活轨迹变成训练数据，但不需要放成这张主路线图里的核心节点。
 
-### Agentopia：长期社会模拟与训练数据
+### Voyager：技能库与开放环境
 
-[Agentopia](https://arxiv.org/abs/2606.07513) 可以看成 Generative Agents 之后的一条更长时间尺度分支。Generative Agents 关心 25 个角色在几天内如何通过记忆、反思和规划维持可置信行为；Agentopia 则把模拟拉到 100 个 Agent、10 个模拟年，并进一步问：这些长期生活轨迹能不能通过 life reward 变成微调数据？
+[Voyager](https://arxiv.org/abs/2305.16291) 把大语言模型智能体放进 Minecraft，核心不是游戏本身，而是三个组件：
 
-单篇阅读见：[Agentopia 论文阅读：长期社会模拟如何变成训练数据](/posts/agentopia-paper-reading/)。
+- automatic curriculum：自动提出接下来该探索什么；
+- skill library：把成功代码沉淀成可复用技能；
+- iterative prompting：根据环境反馈和执行错误持续改写程序。
 
-这篇对我有价值的地方不是“证明 Agent 学会了社会智慧”，而是把长期社会模拟拆成了可检查的系统链路：周计划、联系、活动、环境模型反馈、文件式记忆、年度奖励、轨迹筛选和离线训练。它也提醒我，长期 Agent 的评估不能只看故事是否连贯，还要看 reward、环境模型和训练数据选择到底引入了什么偏好。
+这篇适合放在“长期能力”和“游戏环境 Agent”分支。它让我关注的是：Agent 的能力不只存在于模型参数里，也可以存在于外部技能库和可执行代码中。
 
 ### MemGPT：把上下文管理看成虚拟内存
 
@@ -220,24 +211,31 @@ agent:
 评测如何定义？
 ```
 
+### Claude Code：真实编码 Agent 的产品形态
+
+[Claude Code](https://docs.anthropic.com/en/docs/claude-code/overview) 是比论文和 benchmark 更接近真实使用现场的工程样本。它不是只展示“模型会写代码”，而是把代码搜索、文件读写、shell 执行、权限确认、上下文压缩、MCP、插件、技能、子 Agent、IDE bridge、Git workflow 和终端 UI 组织成一个长期运行的开发工具。
+
+我本地临时看了一份 `MojoisMojo/claude-code` 的源码快照。它的 README 说明这不是 Anthropic 官方仓库，而是一个用于安全研究的公开源码快照；因此更适合把它当作架构观察材料，而不是当作官方实现文档来引用。即便如此，它仍然能提示一件事：真正落地的编码 Agent，重点已经不只是 prompt 或单个模型能力，而是工具注册、权限系统、会话状态、插件边界、远程/IDE 协议和多 Agent 协作这些工程层。
+
 ## 我现在的系列计划
 
-按当前进度，系列可以这样展开：
+按论文发表或产品发布的大致时间，系列可以这样展开：
 
-| 顺序 | 文章 | 状态 |
+| 时间 | 文章 | 状态 |
 | --- | --- | --- |
-| 1 | ReAct：reasoning + acting 闭环 | 已完成 |
-| 2 | Toolformer：自监督工具调用学习 | 已完成 |
-| 3 | Voyager：技能库、自动课程与游戏环境智能体 | 已完成 |
-| 4 | Generative Agents：记忆、规划、反思 | 已完成 |
-| 5 | Agentopia：长期社会模拟与训练数据 | 已完成 |
-| 6 | MemGPT：上下文管理作为虚拟内存 | 待写 |
-| 7 | SWE-bench：真实软件工程任务评测 | 待写 |
-| 8 | MCP：Agent 工具协议层 | 待写 |
-| 9 | tau-bench 与可靠性评测 | 待写 |
-| 10 | Agent 工程实践：workflow、agent 与框架边界 | 待写 |
+| 2022-10 | ReAct：reasoning + acting 闭环 | 已完成 |
+| 2023-02 | Toolformer：自监督工具调用学习 | 已完成 |
+| 2023-04 | Generative Agents：记忆、规划、反思 | 已完成 |
+| 2023-05 | Voyager：技能库、自动课程与游戏环境智能体 | 已完成 |
+| 2023-10 | SWE-bench：真实软件工程任务评测 | 待写 |
+| 2023-10 | MemGPT：上下文管理作为虚拟内存 | 待写 |
+| 2024-06 | tau-bench 与可靠性评测 | 待写 |
+| 2024-11 | MCP：Agent 工具协议层 | 待写 |
+| 2024-12 | Building Effective Agents：workflow、agent 与框架边界 | 待写 |
+| 2025-02 / 2025-05 | Claude Code：真实编码 Agent 的产品形态 | 待写 |
+| 2026-02 | Towards a Science of AI Agent Reliability | 待写 |
 
-这个顺序不是严格时间线，而是学习路径：
+这张表按时间排，但阅读时仍然可以按问题意识跳转：
 
 ```text
 先理解 Agent 的基本动作
@@ -257,12 +255,12 @@ Generative Agents 写完后，再写 MemGPT 会更顺：Generative Agents 讲自
 ```text
 ReAct 定义运行时闭环。
 Toolformer 证明工具调用可以被模型学习。
-Voyager 把能力沉淀到技能库。
 Generative Agents 把行为拆成记忆、规划、反思。
-Agentopia 把长期社会生活轨迹变成可计分、可筛选的训练数据。
+Voyager 把能力沉淀到技能库。
 MemGPT 把上下文管理系统化。
 SWE-bench 和 tau-bench 把 Agent 拉到真实任务与状态化评测。
 MCP 把工具连接推向协议层。
+Claude Code 把这些机制压进真实开发工具。
 Reliability Science 提醒我们：能力增长不等于可靠性自动解决。
 ```
 
