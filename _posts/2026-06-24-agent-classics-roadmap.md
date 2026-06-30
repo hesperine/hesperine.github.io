@@ -15,6 +15,7 @@ tags: [Agent, LLM Agent, Agent Evaluation]
 > - [Toolformer 论文精读：语言模型如何通过自监督学习获得工具使用能力](/posts/toolformer-paper-reading/)
 > - [Voyager 论文阅读：大语言模型智能体如何把经验沉淀成技能库](/posts/voyager-paper-reading/)
 > - [Generative Agents 论文阅读：记忆、反思与规划如何支撑可置信的小镇](/posts/generative-agents-paper-reading/)
+> - [Agentopia 论文阅读：长期社会模拟如何变成训练数据](/posts/agentopia-paper-reading/)
 {: .prompt-tip }
 
 ## 先限定范围
@@ -113,6 +114,14 @@ memory + planning + reflection
 单篇阅读见：[Generative Agents 论文阅读：记忆、反思与规划如何支撑可置信的小镇](/posts/generative-agents-paper-reading/)。
 
 这条线后面可以接 mem0、agent memory、personalized agent，以及各种“长期陪伴型 agent”的工程实现。
+
+### Agentopia：长期社会模拟与训练数据
+
+[Agentopia](https://arxiv.org/abs/2606.07513) 可以看成 Generative Agents 之后的一条更长时间尺度分支。Generative Agents 关心 25 个角色在几天内如何通过记忆、反思和规划维持可置信行为；Agentopia 则把模拟拉到 100 个 Agent、10 个模拟年，并进一步问：这些长期生活轨迹能不能通过 life reward 变成微调数据？
+
+单篇阅读见：[Agentopia 论文阅读：长期社会模拟如何变成训练数据](/posts/agentopia-paper-reading/)。
+
+这篇对我有价值的地方不是“证明 Agent 学会了社会智慧”，而是把长期社会模拟拆成了可检查的系统链路：周计划、联系、活动、环境模型反馈、文件式记忆、年度奖励、轨迹筛选和离线训练。它也提醒我，长期 Agent 的评估不能只看故事是否连贯，还要看 reward、环境模型和训练数据选择到底引入了什么偏好。
 
 ### MemGPT：把上下文管理看成虚拟内存
 
@@ -221,11 +230,12 @@ agent:
 | 2 | Toolformer：自监督工具调用学习 | 已完成 |
 | 3 | Voyager：技能库、自动课程与游戏环境智能体 | 已完成 |
 | 4 | Generative Agents：记忆、规划、反思 | 已完成 |
-| 5 | MemGPT：上下文管理作为虚拟内存 | 待写 |
-| 6 | SWE-bench：真实软件工程任务评测 | 待写 |
-| 7 | MCP：Agent 工具协议层 | 待写 |
-| 8 | tau-bench 与可靠性评测 | 待写 |
-| 9 | Agent 工程实践：workflow、agent 与框架边界 | 待写 |
+| 5 | Agentopia：长期社会模拟与训练数据 | 已完成 |
+| 6 | MemGPT：上下文管理作为虚拟内存 | 待写 |
+| 7 | SWE-bench：真实软件工程任务评测 | 待写 |
+| 8 | MCP：Agent 工具协议层 | 待写 |
+| 9 | tau-bench 与可靠性评测 | 待写 |
+| 10 | Agent 工程实践：workflow、agent 与框架边界 | 待写 |
 
 这个顺序不是严格时间线，而是学习路径：
 
@@ -249,6 +259,7 @@ ReAct 定义运行时闭环。
 Toolformer 证明工具调用可以被模型学习。
 Voyager 把能力沉淀到技能库。
 Generative Agents 把行为拆成记忆、规划、反思。
+Agentopia 把长期社会生活轨迹变成可计分、可筛选的训练数据。
 MemGPT 把上下文管理系统化。
 SWE-bench 和 tau-bench 把 Agent 拉到真实任务与状态化评测。
 MCP 把工具连接推向协议层。
