@@ -1,6 +1,6 @@
 ---
 title: EdgeBench 论文阅读：Agent 如何从真实环境反馈里持续变好
-date: 2026-07-06 23:10:00 +0800
+date: 2026-07-06 20:00:00 +0800
 categories: [论文阅读, Agent 论文]
 tags: [Agent, EdgeBench, Agent Evaluation, LLM Agent]
 ---
