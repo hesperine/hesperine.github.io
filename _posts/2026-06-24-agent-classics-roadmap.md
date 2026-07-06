@@ -11,6 +11,7 @@ tags: [Agent, LLM Agent, Agent Evaluation]
 
 > 已经写完的几篇：
 >
+> - [WebGPT 论文阅读：浏览器、引用和人类反馈如何把 GPT-3 接到外部世界](/posts/webgpt-paper-reading/)
 > - [ReAct 论文阅读：把语言模型从回答器变成会行动的 Agent](/posts/react-paper-reading/)
 > - [Toolformer 论文精读：语言模型如何通过自监督学习获得工具使用能力](/posts/toolformer-paper-reading/)
 > - [Generative Agents 论文阅读：记忆、反思与规划如何支撑可置信的小镇](/posts/generative-agents-paper-reading/)
@@ -22,7 +23,7 @@ tags: [Agent, LLM Agent, Agent Evaluation]
 
 LLM Agent 不是突然从 ReAct 开始冒出来的。2021-2022 年有几条前史线索已经很清楚：浏览器、工具、程序解释器、推理链。
 
-[WebGPT](https://arxiv.org/abs/2112.09332)（论文）把模型放进浏览器辅助问答环境里，让模型检索网页、引用来源，再用人类反馈训练答案偏好。它还不是后来的通用 Agent，但已经把“语言模型 + 外部信息环境 + 人类反馈”连在了一起。
+[WebGPT](https://arxiv.org/abs/2112.09332)（论文；[单篇阅读](/posts/webgpt-paper-reading/)）把模型放进浏览器辅助问答环境里，让模型检索网页、引用来源，再用人类反馈训练答案偏好。它还不是后来的通用 Agent，但已经把“语言模型 + 外部信息环境 + 人类反馈”连在了一起。
 
 [MRKL](https://arxiv.org/abs/2205.00445)（论文）把语言模型放进模块化系统里，让模型和计算器、数据库、搜索、符号模块协同。它的意义不在于具体模块多强，而在于提出了一种很后来的系统思路：LLM 不必单独完成所有事情，它可以成为路由器和协调器。
 
@@ -247,7 +248,7 @@ Agent 不再只是模型能力展示。
 
 | 时间 | 节点 | 标注 | 为什么重要 | 系列状态 |
 | --- | --- | --- | --- | --- |
-| 2021-12 | WebGPT | 论文 | 浏览器、引用、人类反馈雏形 | 待写 |
+| 2021-12 | WebGPT | 论文 | 浏览器、引用、人类反馈雏形 | 已完成 |
 | 2022-01 / 03 | CoT / Self-Consistency | 论文 | 推理过程显式化，多路径稳定化 | 待写 |
 | 2022-05 | MRKL | 论文 | LLM 作为模块化系统路由器 | 待写 |
 | 2022-10 | ReAct | 论文 | reasoning + acting 闭环 | 已完成 |
