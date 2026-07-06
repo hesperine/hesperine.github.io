@@ -3,6 +3,7 @@ title: Agentopia 论文阅读：长期社会模拟如何变成训练数据
 date: 2026-06-30 15:00:00 +0800
 categories: [论文阅读, Agent 论文]
 tags: [Agent, Agentopia, Agent Memory, Multi-Agent]
+mermaid: true
 ---
 
 论文：[Agentopia: Long-Term Life Simulation and Learning in Agent Societies](https://arxiv.org/abs/2606.07513)，arXiv v1 提交于 2026-06-05。官方仓库是 [Neph0s/Agentopia](https://github.com/Neph0s/Agentopia)。这篇论文目前更适合当作一篇系统论文读，而不是当作“已经证明 LLM 学会社会智慧”的结果论文读。
