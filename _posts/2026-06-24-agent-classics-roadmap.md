@@ -17,6 +17,7 @@ tags: [Agent, LLM Agent, Agent Evaluation]
 > - [Generative Agents 论文阅读：记忆、反思与规划如何支撑可置信的小镇](/posts/generative-agents-paper-reading/)
 > - [Voyager 论文阅读：大语言模型智能体如何把经验沉淀成技能库](/posts/voyager-paper-reading/)
 > - [Agentopia 论文阅读：长期社会模拟如何变成训练数据](/posts/agentopia-paper-reading/)
+> - [EdgeBench 论文阅读：Agent 如何从真实环境反馈里持续变好](/posts/edgebench-paper-reading/)
 {: .prompt-tip }
 
 ## 2021-2022：前史，模型开始接触外部世界
@@ -233,6 +234,8 @@ Agent 不再只是模型能力展示。
 
 [Towards a Science of AI Agent Reliability](https://arxiv.org/abs/2602.16666)（论文）进一步把可靠性拆成 consistency、robustness、predictability、safety 等维度。这个方向对工程落地很重要，因为上线后的 Agent 不能只在某一次 seed 下“看起来能用”。
 
+[EdgeBench](https://github.com/ByteDance-Seed/EdgeBench)（评测/技术报告；[单篇阅读](/posts/edgebench-paper-reading/)）可以接在这条线上。它不是再测一次 one-shot success rate，而是把 Agent 放进可执行任务环境，让它在 12 小时以上的时间预算里通过本地反馈和隐藏 judge 反馈持续迭代。它的 134 个任务覆盖科学与机器学习、系统与软件工程、组合优化、专业知识工作、形式化数学和交互游戏，并公开了其中 51 个任务和评测框架。对这条主线来说，EdgeBench 的关键价值在于把“Agent 会不会做题”推进到“Agent 能不能从真实环境反馈中学习，以及这种学习曲线是否可度量”。
+
 这条线最终会回到系统问题：
 
 ```text
@@ -278,5 +281,6 @@ Agent 不再只是模型能力展示。
 | 2025 | Claude Code / coding agents | 产品/工程系统 | Agent 进入真实开发工作流 | 待写 |
 | 2026-02 | Agent Reliability | 论文 | 可靠性拆解为可研究维度 | 待写 |
 | 2026-06 | Agentopia | 论文/系统 | 长期社会模拟与轨迹训练数据 | 已完成 |
+| 2026-07 | EdgeBench | 评测/技术报告 | 长时程真实环境反馈与 Agent 学习曲线 | 已完成 |
 
 如果这组文章能写完，它应该不是“读过哪些论文”的清单，而是一条能支撑后续研究和工程判断的主线。
