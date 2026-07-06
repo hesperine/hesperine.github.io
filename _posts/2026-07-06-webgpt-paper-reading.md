@@ -1,6 +1,6 @@
 ---
 title: WebGPT 论文阅读：浏览器、引用和人类反馈如何把 GPT-3 接到外部世界
-date: 2026-07-06 20:30:00 +0800
+date: 2026-07-06 20:00:00 +0800
 categories: [论文阅读, Agent 论文]
 tags: [Agent, WebGPT, Tool Use, RLHF]
 mermaid: true
