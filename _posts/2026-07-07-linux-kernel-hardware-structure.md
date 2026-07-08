@@ -1,15 +1,15 @@
 ---
-title: Linux 内核学习笔记：硬件结构阅读批注
+title: Linux 内核学习笔记：硬件结构
 date: 2026-07-07 17:05:00 +0800
 categories: [学习笔记, OS与Linux内核笔记]
 tags: [Linux, Linux Kernel, Operating System, CPU, Cache, Interrupt]
 ---
 
-这一篇按小林 Code《图解系统》第一章“硬件结构”的顺序做阅读批注。硬件结构在这组 Linux 笔记里只服务几个后续问题：CPU 如何执行和切换任务，内存层次怎样影响系统性能，Cache 和锁为什么相关，中断和软中断怎样把硬件事件接进内核。
+这一篇记录硬件结构里和 OS/Linux 直接相关的几个问题：CPU 如何执行和切换任务，内存层次怎样影响系统性能，Cache 和锁为什么相关，中断和软中断怎样把硬件事件接进内核。
 
 ## 问题索引
 
-| 小林 Code 主题 | 本篇记录 |
+| 主题 | 本篇记录 |
 | --- | --- |
 | CPU 是如何执行程序的 | 指令、寄存器、程序计数器、内存、总线 |
 | 存储器金字塔 | 寄存器、Cache、内存、SSD/HDD 的速度和容量层次 |
@@ -32,7 +32,7 @@ tags: [Linux, Linux Kernel, Operating System, CPU, Cache, Interrupt]
 
 OS 里的“上下文”就从这里来。一个任务被切走时，内核必须保存足够的 CPU 状态；任务再次运行时，CPU 要恢复这些状态，才能从原来的位置继续执行。
 
-Linux 批注：
+Linux 落点：
 
 | OS 概念 | Linux 落点 |
 | --- | --- |
@@ -83,7 +83,7 @@ Linux 批注：
 | 时间局部性 | 最近访问过的数据很可能再次访问 | 循环里反复使用变量 |
 | 空间局部性 | 访问某地址后，很可能访问相邻地址 | 顺序遍历数组 |
 
-Linux 批注：
+Linux 落点：
 
 | 现象 | 解释入口 |
 | --- | --- |
@@ -102,9 +102,9 @@ Linux 批注：
 
 ## 4. Cache 命中和代码写法
 
-小林 Code 这一节的核心问题是怎样提升 CPU Cache 命中率。OS/Linux 笔记里只保留和系统机制直接相关的点。
+这一节只保留和系统机制直接相关的 Cache 问题。
 
-| 问题 | 批注 |
+| 问题 | 记录 |
 | --- | --- |
 | 数据 Cache 命中率 | 顺序访问、紧凑布局、减少随机指针追踪 |
 | 指令 Cache 命中率 | 热路径保持紧凑，减少复杂分支和冷路径污染 |
@@ -141,7 +141,7 @@ MESI 四种状态：
 | Shared | 多个核心缓存，且和内存一致 |
 | Invalid | 当前 Cache line 失效 |
 
-Linux 批注：
+Linux 落点：
 
 | 内核机制 | 和缓存一致性的关系 |
 | --- | --- |
@@ -168,7 +168,7 @@ Cache line
 
 解决思路是让高频写字段分散到不同 Cache line，常见做法是 padding、对齐、per-CPU 数据。
 
-Linux 批注：
+Linux 落点：
 
 | 场景 | 相关机制 |
 | --- | --- |
@@ -181,9 +181,9 @@ Linux 批注：
 
 CPU 本身只会执行当前指令流。哪个 task 运行由 OS 调度器决定。
 
-小林 Code 在硬件结构里已经引出调度类、完全公平调度、CPU 运行队列和优先级。这里先记录接口，不展开算法。
+调度类、完全公平调度、CPU 运行队列和优先级这里只记录接口，不展开算法。
 
-| 概念 | Linux 批注 |
+| 概念 | Linux 落点 |
 | --- | --- |
 | 调度类 | 不同任务类型使用不同调度策略，例如普通任务、实时任务 |
 | CFS / EEVDF | 普通任务调度的核心策略，后续调度章节展开 |
@@ -236,7 +236,7 @@ CPU 本身只会执行当前指令流。哪个 task 运行由 OS 调度器决定
 
 ## 9. 浮点数：作为组成原理复习
 
-小林 Code 第一章最后讲补码和浮点数。它对 Linux 内核主线的关系较弱，但对理解计算机组成和程序行为有用。
+补码和浮点数对 Linux 内核主线的关系较弱，但对理解计算机组成和程序行为有用。
 
 | 问题 | 记录 |
 | --- | --- |
@@ -271,7 +271,6 @@ CPU 本身只会执行当前指令流。哪个 task 运行由 OS 调度器决定
 
 ## 本篇参考
 
-- 小林 Code《图解系统》第一章：硬件结构
 - Remzi H. Arpaci-Dusseau and Andrea C. Arpaci-Dusseau, *Operating Systems: Three Easy Pieces*
 - Randal E. Bryant, David R. O'Hallaron, *Computer Systems: A Programmer's Perspective*
 - Brendan Gregg, *Systems Performance*

@@ -1,15 +1,15 @@
 ---
-title: Linux 内核学习笔记：网络系统阅读批注
+title: Linux 内核学习笔记：网络系统
 date: 2026-07-07 17:59:00 +0800
 categories: [学习笔记, OS与Linux内核笔记]
 tags: [Linux, Linux Kernel, Operating System, Network, Socket]
 ---
 
-这一篇按小林 Code《图解系统》第八章“网络系统”的顺序记：Linux 如何收发网络包、零拷贝、I/O 多路复用、Reactor 和 Proactor。Linux 批注落到 socket、`sk_buff`、NAPI、softirq、DMA、page cache、`sendfile()`、epoll、wait queue。
+这一篇记录网络系统的几个基础问题：Linux 如何收发网络包、零拷贝、I/O 多路复用、Reactor 和 Proactor。Linux 落点放在 socket、`sk_buff`、NAPI、softirq、DMA、page cache、`sendfile()`、epoll、wait queue。
 
 ## 问题索引
 
-| 小林 Code 主题 | 本篇记录 |
+| 主题 | 本篇记录 |
 | --- | --- |
 | Linux 如何收发网络包 | TCP/IP 模型、socket、协议栈、网卡驱动、DMA、NAPI |
 | 零拷贝 | 传统文件传输、`mmap()`、`sendfile()`、SG-DMA、page cache |
@@ -117,7 +117,7 @@ epoll 关注两个触发模式。
 | LT | level-triggered，条件满足时会反复通知 |
 | ET | edge-triggered，状态变化时通知，通常配合非阻塞 I/O |
 
-Linux 批注：socket 等待事件最终会接到等待队列和 wakeup。epoll 自己也有 ready list。fd 就绪时，唤醒等待在 epoll 上的线程；线程返回用户态后再主动调用 `read()` / `write()` 完成数据传输。
+Linux 落点：socket 等待事件最终会接到等待队列和 wakeup。epoll 自己也有 ready list。fd 就绪时，唤醒等待在 epoll 上的线程；线程返回用户态后再主动调用 `read()` / `write()` 完成数据传输。
 
 ## 6. Reactor 和 Proactor
 
@@ -164,7 +164,7 @@ Linux 网络服务大量使用 Reactor/epoll 组合。Linux 的异步 I/O 历史
 
 ## 压缩表
 
-| 概念 | 小林 Code / 八股 | Linux 落点 |
+| 概念 | 基础概念 / 八股 | Linux 落点 |
 | --- | --- | --- |
 | 收包 | 网卡到应用 | DMA、IRQ、NAPI、softirq、`sk_buff`、socket queue |
 | 发包 | 应用到网卡 | socket buffer、TCP/IP、qdisc、driver、TX ring |
@@ -188,7 +188,6 @@ Linux 网络服务大量使用 Reactor/epoll 组合。Linux 的异步 I/O 历史
 
 ## 本篇参考
 
-- 小林 Code《图解系统》第八章：网络系统
 - Linux Kernel Documentation: Networking
 - Linux Kernel Documentation: BPF and XDP
 - Michael Kerrisk, *The Linux Programming Interface*

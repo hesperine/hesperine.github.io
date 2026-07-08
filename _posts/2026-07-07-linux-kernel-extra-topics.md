@@ -5,7 +5,7 @@ categories: [学习笔记, OS与Linux内核笔记]
 tags: [Linux, Linux Kernel, Operating System, BPF, Container]
 ---
 
-小林 Code《图解系统》的系统方向主线到 Linux 命令结束。这一篇作为系列收尾，把额外 Linux 内核专题摊开：横切路径、namespace/cgroup、tracing/perf/BPF、源码阅读、最小实验。它们不再按教材章节推进，而是把前面学过的进程、内存、文件、设备、网络机制串到真实工程问题上。
+这一篇作为系列收尾，把额外 Linux 内核专题摊开：横切路径、namespace/cgroup、tracing/perf/BPF、源码阅读、最小实验。它们不再按教材章节推进，而是把前面学过的进程、内存、文件、设备、网络机制串到真实工程问题上。
 
 ## 问题索引
 
