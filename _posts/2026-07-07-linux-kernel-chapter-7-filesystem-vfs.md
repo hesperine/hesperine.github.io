@@ -7,6 +7,14 @@ tags: [Linux, Linux Kernel, Filesystem, VFS, Page Cache]
 
 文件系统这章从 fd、路径名和 page cache 三条线记。fd 是进程访问内核对象的 handle；路径名通过 VFS lookup 找到 dentry 和 inode；文件内容读写通常会经过 page cache。
 
+三层阅读线索：
+
+| 层次 | 本章对应内容 |
+| --- | --- |
+| 小林 Code / 八股 | 文件系统全家桶、文件写入后崩溃是否丢数据、缓存和磁盘 |
+| OSTEP / 教材 | 持久化、文件和目录、文件系统实现、崩溃一致性 |
+| Linux 实现 | fdtable、`struct file`、dentry、inode、VFS、page cache、writeback |
+
 ## OS 抽象
 
 文件系统提供持久化命名空间。应用看到路径、目录、文件、读写接口；内核需要维护路径解析、权限检查、打开文件状态、缓存、写回和具体文件系统实现。

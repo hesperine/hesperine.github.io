@@ -5,7 +5,15 @@ categories: [学习笔记, OS与Linux内核笔记]
 tags: [Linux, Linux Kernel, Namespace, cgroup, Container]
 ---
 
-容器不是一个单独内核对象，而是一组 Linux 机制的组合。namespace 管进程能看见什么，cgroup 管进程能用多少资源，再加上 capabilities、seccomp、LSM、rootfs、mount 等机制，形成容器运行环境。
+容器是一组 Linux 机制的组合。namespace 管进程能看见什么，cgroup 管进程能用多少资源，再加上 capabilities、seccomp、LSM、rootfs、mount 等机制，形成容器运行环境。
+
+三层阅读线索：
+
+| 层次 | 本章对应内容 |
+| --- | --- |
+| 小林 Code / 八股 | 进程隔离、资源限制、容器与虚拟机差异 |
+| OSTEP / 教材 | 资源虚拟化、保护、隔离和受控共享 |
+| Linux 实现 | namespace、cgroup v2、controller、capability、seccomp、rootfs |
 
 ## OS 抽象
 
@@ -147,7 +155,7 @@ nsenter -t <pid> -p -m -n sh
 | 问题 | 参考回答 |
 | --- | --- |
 | namespace 和 cgroup 的区别是什么？ | namespace 管进程能看到什么资源视图；cgroup 管进程能使用多少资源，并提供统计和限制。 |
-| 容器是不是一个内核对象？ | 容器通常是多个 Linux 机制的组合，包括 namespace、cgroup、rootfs、capability、seccomp、LSM 等，不是单一内核结构。 |
+| 容器是一个内核对象吗？ | 容器通常是多个 Linux 机制的组合，包括 namespace、cgroup、rootfs、capability、seccomp、LSM 等，并非单一内核结构。 |
 | 为什么容器里进程看到自己是 PID 1？ | PID namespace 提供独立 PID 视图。同一个 task 在宿主机和容器 namespace 中可以有不同 PID。 |
 | cgroup OOM 和系统 OOM 怎么分？ | cgroup OOM 是某个 cgroup 超过内存限制；系统 OOM 是整机内存压力无法回收。容器 OOM 不一定代表宿主机内存耗尽。 |
 | user namespace 有什么用？ | user namespace 允许容器内 uid/gid 和宿主机 uid/gid 映射不同，配合 capability 降低特权操作风险。 |

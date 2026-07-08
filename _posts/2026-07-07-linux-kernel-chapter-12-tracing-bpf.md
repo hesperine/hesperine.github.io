@@ -7,6 +7,14 @@ tags: [Linux, Linux Kernel, BPF, eBPF, perf, ftrace]
 
 tracing 把前面学过的内核机制变成可观测事件。系统调用、调度、page fault、I/O、网络包、锁竞争都可以通过 perf、ftrace、tracepoint、kprobe、uprobe、BPF 观察。
 
+三层阅读线索：
+
+| 层次 | 本章对应内容 |
+| --- | --- |
+| 小林 Code / 八股 | Linux 命令和性能指标怎么看 |
+| OSTEP / 教材 | 用观测验证 CPU、内存、I/O、并发这些抽象机制 |
+| Linux 实现 | perf event、tracefs、tracepoint、kprobe、uprobe、BPF map、verifier、BTF |
+
 ## OS 抽象
 
 观测系统需要三个部分：

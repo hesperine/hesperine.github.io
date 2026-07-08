@@ -9,6 +9,14 @@ tags: [Linux, Linux Kernel, Process, Thread, Scheduler]
 
 OS 抽象里，进程是资源边界，线程是共享同一进程资源的执行流。Linux 实现里，调度器直接面对 task；进程和线程的差异主要落在这些 task 共享哪些资源。
 
+三层阅读线索：
+
+| 层次 | 本章对应内容 |
+| --- | --- |
+| 小林 Code / 八股 | 进程/线程区别、进程状态、fork/exec、IPC、线程崩溃影响 |
+| OSTEP / 教材 | 进程抽象、进程 API、地址空间继承、受限直接执行 |
+| Linux 实现 | `task_struct`、pid/tgid、`copy_process()`、`clone()` flags、`execve()`、`exit()`、`wait()` |
+
 这一章对应进程管理模块。小林 Code 里的进程/线程、IPC、多线程冲突、死锁等问题，都可以先落到 task、资源共享和等待/唤醒三条线。
 
 | 八股问题 | 本章落点 |

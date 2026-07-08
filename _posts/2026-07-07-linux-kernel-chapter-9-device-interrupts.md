@@ -7,6 +7,14 @@ tags: [Linux, Linux Kernel, Device Driver, Interrupt, Workqueue]
 
 设备管理把硬件和内核对象接起来。用户态通常通过设备文件、socket、sysfs、ioctl、read/write 访问设备；内核通过 driver model、设备驱动、中断、DMA、workqueue 等机制处理硬件事件。
 
+三层阅读线索：
+
+| 层次 | 本章对应内容 |
+| --- | --- |
+| 小林 Code / 八股 | 键盘敲入一个字符发生了什么、软中断、设备和驱动 |
+| OSTEP / 教材 | I/O 设备、轮询、中断、DMA、设备驱动 |
+| Linux 实现 | `/dev`、major/minor、driver model、IRQ、softirq、workqueue、block layer |
+
 ## OS 抽象
 
 设备比 CPU 慢，也更异步。程序发起 I/O 请求后，设备可能过一段时间才完成；完成事件通常通过中断通知 CPU。内核要处理三件事：

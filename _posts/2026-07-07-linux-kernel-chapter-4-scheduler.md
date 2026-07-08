@@ -9,6 +9,14 @@ tags: [Linux, Linux Kernel, Scheduler, CFS, EEVDF, perf, BPF]
 
 调度问题可以拆成两层。第一层是 OS 抽象：执行实体、状态、上下文、运行队列、阻塞、唤醒、抢占。第二层是 Linux 实现：`task_struct`、`rq`、scheduling class、`schedule()`、`try_to_wake_up()`、`context_switch()`。最小模型实现放在最后，用来对照这些对象在一个小内核里怎样落地。
 
+三层阅读线索：
+
+| 层次 | 本章对应内容 |
+| --- | --- |
+| 小林 Code / 八股 | 调度算法、进程状态转换、上下文切换、抢占、调度延迟 |
+| OSTEP / 教材 | CPU 虚拟化、调度策略、时间片、公平性、响应时间 |
+| Linux 实现 | per-CPU `rq`、scheduling class、fair/rt/deadline、`schedule()`、`try_to_wake_up()`、tracepoint |
+
 这一章对应调度系统模块。小林 Code 里的进程调度算法、页面置换算法、磁盘调度算法可以作为算法八股入口；Linux 调度器这一章只展开 CPU 调度，重点放在 task state、runqueue、调度类、上下文切换和唤醒路径。
 
 | 八股问题 | 本章落点 |

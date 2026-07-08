@@ -1,515 +1,306 @@
-﻿---
+---
 title: Linux 内核学习笔记（二）：从一次 read() 看内核如何接管执行
 date: 2026-07-07 17:30:00 +0800
 categories: [学习笔记, OS与Linux内核笔记]
 tags: [Linux, Linux Kernel, Operating System, System Call, Scheduler, Virtual Memory]
 ---
 
-`read()` 路径记录。一行普通用户态代码会同时经过系统调用入口、当前进程、文件描述符、VFS、用户内存检查、阻塞等待和调度器。
+第 2 个模块入口记录一条横切路径：用户态执行 `read(fd, buf, count)` 后，Linux 如何从系统调用入口走到当前 task、文件描述符表、VFS、用户缓冲区、page cache、等待队列和调度器。
 
-这条路径适合做第一条 Linux 横切路径。它同时连接六大模块里的四个部分：
+本模块可以继续拆成多篇笔记。这里先写入口笔记：
 
-| 模块 | `read()` 里的落点 |
+| 笔记单元 | 记录内容 |
 | --- | --- |
-| 进程管理 | `current`、`task_struct`、当前 task 的资源引用 |
-| 文件系统 | fdtable、`struct file`、VFS、page cache |
-| 内存管理 | 用户态 `buf`、VMA、page fault、`copy_to_user()` |
-| 调度系统 | wait queue、sleeping、wakeup、`schedule()` |
+| 基础与八股 | 系统调用、文件描述符、阻塞 I/O、同步/异步 I/O、上下文切换 |
+| OS 模型 | trap、进程资源表、虚拟地址空间、I/O 等待、调度 |
+| Linux 实现 | `current`、`files_struct`、fdtable、`struct file`、VFS、page cache、`copy_to_user()`、wait queue |
 
-路径草图：
+## 2.1 基础与八股：问题边界
+
+`read(fd, buf, count)` 可以拆成三个参数和两类结果。
+
+| 参数 | 用户态看到的含义 | 内核要确认的事 |
+| --- | --- | --- |
+| `fd` | 一个整数 | 是否能在当前进程的打开文件表中解析到对象 |
+| `buf` | 一段用户态地址 | 是否属于当前地址空间，是否可写 |
+| `count` | 最多读取多少字节 | 长度是否合法，返回值如何表达成功或失败 |
+
+常见问题：
+
+| 问题 | 短回答 |
+| --- | --- |
+| 系统调用是什么？ | 用户程序请求内核服务的正式入口，参数要按 syscall ABI 传给内核。 |
+| fd 是什么？ | 进程局部的整数 handle，指向当前进程打开文件表里的某个打开对象。 |
+| 为什么 `read()` 不直接用文件名？ | 文件名在 `open()` 时解析，`read()` 使用 `open()` 返回的 fd。 |
+| `read()` 会不会阻塞？ | 取决于对象和打开方式。普通文件可能等磁盘 I/O，pipe/socket 可能等数据到达。 |
+| 阻塞 I/O 等什么？ | 等内核侧数据准备好，也等数据从内核缓冲区复制到用户缓冲区。 |
+| 同步 I/O 和阻塞 I/O 是一回事吗？ | 二者不同。阻塞/非阻塞描述调用在数据未就绪时是否等待；同步/异步描述 I/O 完成过程由调用方等待还是由内核完成后通知。 |
+| 用户缓冲区为什么要检查？ | `buf` 是用户虚拟地址，可能非法、不可写，或者访问时触发 page fault。 |
+| 系统调用进入内核态等于上下文切换吗？ | 不等于。syscall 是同一个 task 进入内核代码；context switch 是 CPU 从一个 task 切到另一个 task。 |
+
+小林 Code《图解系统》的文件系统部分从用户视角讲 `open -> read/write -> close`，核心点是：打开文件后，操作系统要为进程维护打开文件表，fd 是打开文件的标识；文件读写最终会被文件系统转换为对数据块和缓存的操作。
+
+## 2.2 OS 模型：一次 read 涉及哪些抽象
+
+从 OSTEP 的视角看，`read()` 同时碰到三条主线：
+
+| 主线 | `read()` 中的体现 |
+| --- | --- |
+| 虚拟化 CPU | 当前进程通过 syscall 进入内核，阻塞时让出 CPU，之后再被调度回来 |
+| 虚拟化内存 | `buf` 是当前进程的虚拟地址，内核要通过当前地址空间访问它 |
+| 持久化 | fd 对应文件系统对象，数据可能来自磁盘、page cache、pipe、socket 或设备 |
+
+`read()` 的最小状态线：
 
 ```text
-用户态 read()
-  -> syscall 进入内核态
-  -> current 找到当前 task_struct
-  -> current->files 找到 fd table
-  -> fd table 找到 struct file
-  -> VFS 分发到具体文件/设备/socket
-  -> 访问用户缓冲区时可能触发 page fault
-  -> 数据未准备好时进入 wait queue 并 schedule()
+用户态运行
+  -> syscall/trap 进入内核
+  -> 查当前进程资源
+  -> 查 fd 对应对象
+  -> 数据就绪则复制到用户缓冲区
+  -> 数据未就绪则阻塞、调度、等待唤醒
+  -> 返回用户态
 ```
 
-`read()` 路径里记录几个问题：
+这里有两个容易混的边界。
 
-- 当前执行实体是谁？
-- 它从哪里进入内核？
-- 它带来了哪些用户态参数？
-- 内核要查哪些对象？
-- 它会不会睡眠？
-- 如果睡眠，谁把 CPU 交给下一个 task？
-
-## 术语表 / 八股检查点
-
-| 名词 | 记录 |
+| 边界 | 记录 |
 | --- | --- |
-| syscall ABI | 用户态把 syscall number 和参数放到约定寄存器，CPU 进入内核 |
-| syscall number | 系统调用号，用来分发到具体 syscall 实现 |
-| `current` | 当前 CPU 上正在代表哪个 task 执行内核代码 |
-| user pointer | 用户态传给内核的虚拟地址，不能当内核指针直接解引用 |
-| `copy_to_user()` | 内核把数据复制到用户态地址的接口 |
-| `copy_from_user()` | 内核从用户态地址复制数据的接口 |
-| fdtable | 当前文件表里的 fd 到 `struct file` 映射 |
-| `struct file` | 一次打开文件对象，记录 offset、flags、操作表等 |
-| VFS | Linux 对不同文件系统、socket、pipe、设备提供的统一文件接口 |
-| page fault | 虚拟地址访问无法由当前页表完成时进入内核的异常 |
-| wait queue | 等待某个事件的 task 集合 |
-| blocking I/O | 数据未准备好时 task 进入睡眠等待 |
-| `EFAULT` | 用户地址非法或复制失败时常见错误 |
+| syscall vs context switch | syscall 是同一个 task 从用户态进入内核态；context switch 是 CPU 换另一个 task 运行。 |
+| fd vs 文件名 | 文件名用于路径查找；fd 是打开后的 handle，后续读写主要通过 fd 找打开文件对象。 |
 
-## 从用户态的一行代码开始
+## 2.3 用户态入口：libc、syscall ABI、返回值
+
+用户代码一般调用 libc 的 `read()` 包装函数，最后通过体系结构定义的 syscall 指令进入内核。以 x86-64 为例，系统调用号和参数会放进约定寄存器。
+
+| 内容 | 记录 |
+| --- | --- |
+| syscall number | 用来选择具体系统调用实现 |
+| 参数寄存器 | 放 `fd`、`buf`、`count` 等参数 |
+| 返回值 | 成功返回读到的字节数；失败返回 `-1` 并设置 `errno` |
+
+用户态例子：
 
 ```c
-#include <fcntl.h>
-#include <unistd.h>
-
-int main(void) {
-    char buf[4096];
-    int fd = open("data.txt", O_RDONLY);
-    ssize_t n = read(fd, buf, sizeof(buf));
-    write(1, buf, n);
-    close(fd);
-    return 0;
-}
+char buf[4096];
+int fd = open("data.txt", O_RDONLY);
+ssize_t n = read(fd, buf, sizeof(buf));
+close(fd);
 ```
 
-`read(fd, buf, sizeof(buf))` 里的三个参数在用户态看起来很普通：
+这几行对应三类系统调用：路径名解析和打开文件、基于 fd 的读、释放 fd 引用。
 
-| 参数 | 用户态含义 |
+## 2.4 `current`：这次内核路径代表谁执行
+
+系统调用进入内核后，Linux 需要知道当前路径属于哪个执行实体。`current` 指向当前 CPU 上正在运行的 `task_struct`。
+
+`task_struct` 在这条路径里主要用三组引用：
+
+| 引用 | 用途 |
 | --- | --- |
-| `fd` | 一个整数 |
-| `buf` | 一段用户态内存地址 |
-| `count` | 想读多少字节 |
+| `current->files` | 找当前进程的文件描述符表 |
+| `current->mm` | 找当前进程的地址空间、VMA 和页表 |
+| 调度字段 | 阻塞、唤醒、进入 runqueue 或离开 runqueue |
 
-进入内核后，它们会变成三个检查点：
+`current` 不只是“当前进程”的名字。Linux 里线程也是 task，同一进程内不同线程共享 `mm_struct` 和文件表的方式由 `clone()` flags 决定。`read()` 路径里的“当前”更准确地说是当前 task。
 
-- `fd` 是否是当前进程打开过的文件描述符？
-- `buf` 是否是当前进程地址空间里可写的用户地址？
-- `count` 是否在合理范围内，读到的数据是否真的能复制回用户态？
+## 2.5 fd：整数到 `struct file`
 
-## syscall：从用户态进入内核态
-
-用户态的 `read()` 通常是 libc 包装函数，最后通过 CPU 的 syscall 指令进入内核。以 x86-64 Linux 为例，系统调用号和参数主要放在寄存器里：
-
-| 寄存器 | 内容 |
-| --- | --- |
-| `rax` | syscall number |
-| `rdi` | fd |
-| `rsi` | buf |
-| `rdx` | count |
-
-syscall 入口做几件事：
-
-- 保存必要寄存器。
-- 切到内核定义好的入口路径。
-- 在当前 task 的内核栈上继续执行。
-- 根据 syscall number 分发到具体系统调用实现。
-
-“保存必要寄存器”对应简化模型里的 `context`：CPU 从用户态进入内核时，需要留下足够的信息，之后才能返回原来的用户态位置继续执行。Linux 的保存现场细节和体系结构相关，核心条件是保留可恢复的执行状态。
-
-入口路径：
-
-```text
-用户态 read()
-  |
-  v
-syscall instruction
-  |
-  v
-arch/x86/entry/entry_64.S
-  |
-  v
-arch/x86/entry/common.c
-  |
-  v
-read 系统调用实现
-```
-
-这里还没有发生调度意义上的上下文切换。CPU 仍然在执行同一个 task，只是从用户态指令流进入了内核态指令流。
-
-## current：内核怎么知道当前进程是谁
-
-进入内核后，代码需要知道这次 syscall 属于哪个执行实体。Linux 用 `current` 找到当前 CPU 上正在运行的 `task_struct`。
-
-这一步对应小 OS 里的 `current_task[cpu]`。多 CPU 系统里，每个 CPU 都有自己的当前 task；当前 CPU 进入内核后，`current` 指向“这次内核路径正在代表谁执行”。
-
-`task_struct` 挂着当前任务的主要资源：
-
-```text
-task_struct
-  |
-  +-- mm              用户态地址空间，指向 mm_struct
-  +-- files           打开的文件表，指向 files_struct
-  +-- fs              cwd/root/umask 等文件系统上下文
-  +-- signal/sighand  信号相关状态
-  +-- cred            uid/gid/capability 等权限信息
-  +-- sched fields    调度状态、优先级、调度类
-  +-- stack           内核栈
-```
-
-这里的 task 指 Linux 内核调度和管理的执行实体。Linux 里进程和线程都对应 task。`fork()`、`clone()` / `clone3()`、`pthread_create()` 的差别主要在于新 task 和旧 task 共享哪些资源。线程共享同一个 `mm_struct`，所以同一进程里的线程看到同一份用户态地址空间；普通 `fork()` 会得到一份新的地址空间视图，很多物理页一开始通过 copy-on-write 共享。
-
-本节只用到 `task_struct` 的三条边：
-
-| 边 | 用途 |
-| --- | --- |
-| `current -> files` | 找 fd |
-| `current -> mm` | 检查用户缓冲区 |
-| `current -> sched` | 睡眠、唤醒、调度 |
-
-## fd：整数怎么变成打开文件对象
-
-`fd` 是当前进程文件表里的索引。两个进程都可以有 `fd = 3`，但它们的 `current->files` 不同，最后指向的 `struct file` 也可以不同。
+fd 的查找路径：
 
 ```text
 current
-  |
-  v
-files_struct
-  |
-  v
-fdtable[fd]
-  |
-  v
-struct file
+  -> files_struct
+  -> fdtable
+  -> struct file
 ```
 
-`struct file` 表示一次打开文件实例，里面有当前 offset、打开 flags、引用计数和文件操作表：
+三层对象：
 
-```text
-struct file
-  |
-  +-- f_pos       当前文件偏移
-  +-- f_flags     打开标志
-  +-- f_inode     对应 inode
-  +-- f_op        file_operations
-```
-
-三个对象需要分清：
-
-| 对象 | 含义 |
+| 对象 | 作用 |
 | --- | --- |
-| fd | 用户态整数，进程局部 |
-| `struct file` | 一次 open 得到的打开文件对象，记录 offset/flags |
-| `struct inode` | 文件系统里的文件本体，记录元数据和底层对象 |
+| fd | 进程局部整数，只在当前文件表里有意义 |
+| `struct file` | 一次打开文件对象，保存 offset、flags、引用计数、操作表 |
+| inode / socket / pipe / device | 更底层的实际对象 |
 
-同一个进程 `open()` 两次同一路径，会得到两个 fd，对应两个 `struct file`，文件偏移可以独立变化。`fork()` 之后父子进程继承同一个打开文件对象时，二者可能共享同一个 file offset。
+`open()` 两次同一个路径，通常得到两个 fd 和两个打开文件对象，文件偏移可以独立变化。`fork()` 后父子进程继承同一个打开文件对象时，文件偏移可能共享。这个细节是文件描述符八股题里最容易漏的部分。
 
-## VFS：read 可读多类对象
+`/proc/<pid>/fd` 看到的是 fd 到对象的映射；`/proc/<pid>/fdinfo/<fd>` 可以看到 offset、flags 等信息。
 
-`read()` 可以服务普通磁盘文件、pipe、socket、字符设备、procfs 文件。系统调用层通过 VFS 分发到具体实现。
+## 2.6 VFS：把不同对象统一成文件接口
 
-```text
-read(fd, buf, count)
-  |
-  v
-找到 struct file
-  |
-  v
-VFS
-  |
-  v
-file->f_op->read_iter 或相关实现
-  |
-  v
-具体文件系统 / 设备 / socket / pipe
-```
-
-VFS 提供统一对象和统一操作接口。普通文件、管道、socket 的底层实现不同，但都可以通过 fd 和 `read()` 进入对应的内核路径。
-
-很多 Linux 机制也沿用 fd 作为用户态 handle：`epoll`、`eventfd`、`timerfd`、`signalfd`，以及 BPF program、BPF map、BPF link。
-
-## buf：用户地址不能直接信任
-
-`buf` 是用户态虚拟地址。内核不能把它当成普通内核指针直接写。
-
-内核需要确认：
-
-- `buf` 是否属于当前进程地址空间？
-- 这段地址是否可写？
-- 写入过程中是否会触发 page fault？
-- 复制过程中用户态映射是否仍然有效？
-
-用户态地址空间由 `mm_struct` 和 VMA 描述：
+VFS 把普通文件、目录、pipe、socket、字符设备、procfs 文件等对象放到统一接口下。`read()` 找到 `struct file` 后，最终会分发到这个对象的文件操作。
 
 ```text
-mm_struct
-  |
-  +-- VMA: 代码段，r-x
-  +-- VMA: 堆，rw-
-  +-- VMA: mmap 文件，r-- / rw-
-  +-- VMA: 用户栈，rw-
-  +-- page table
+read()
+  -> fdtable 找 struct file
+  -> VFS
+  -> file_operations
+  -> 具体文件系统 / pipe / socket / 设备
 ```
 
-把数据交回用户程序时，内核通过 `copy_to_user()` 一类接口写入用户地址。这个过程可能触发缺页异常；地址非法时，系统调用会返回错误或进程收到信号。
+几个对象边界：
 
-## page fault：访问内存时进入内核
+| 对象 | 记录 |
+| --- | --- |
+| dentry | 路径名解析时的目录项缓存 |
+| inode | 文件系统里的文件元数据和对象身份 |
+| superblock | 一个已挂载文件系统的整体元数据 |
+| page cache | 内核缓存文件页，减少磁盘 I/O |
+| `file_operations` | 具体对象支持哪些文件操作 |
 
-page fault 是访问虚拟地址时触发的内核入口。当前指令访问虚拟地址，CPU/MMU 发现页表无法完成翻译或权限不满足，于是进入 page fault 处理路径。
+小林 Code 的文件系统章节把用户空间、系统调用、VFS、缓存、文件系统和存储串成一条层次线。Linux 内核里，`read()` 进入 VFS 后是否走 page cache、是否发起磁盘 I/O、是否等待设备，取决于具体对象和打开方式。
 
-例如：
+## 2.7 用户缓冲区：`buf` 是当前地址空间里的虚拟地址
 
-```c
-char *p = malloc(4096 * 1024);
-p[0] = 1;
-```
+`buf` 来自用户态，内核不能直接当成可信内核指针。
 
-`malloc()` 返回的是虚拟地址范围。第一次写 `p[0]` 时，对应物理页可能还没分配。CPU 查页表失败后触发 page fault，内核根据当前任务的 `mm_struct` 和 VMA 判断：
+内核要处理的问题：
 
-- 地址是否落在合法 VMA 内？
-- 访问权限是否匹配？
-- 这是匿名页、文件映射页，还是 copy-on-write？
-- 需要分配新物理页，还是从文件/page cache 建立映射？
+| 问题 | 说明 |
+| --- | --- |
+| 地址是否合法 | 是否落在当前 `mm_struct` 的合法 VMA 内 |
+| 权限是否匹配 | `read()` 要往用户缓冲区写数据，所以目标区域要可写 |
+| 是否已映射物理页 | 没有映射时可能触发 page fault |
+| 复制是否完整 | 用户地址访问失败时要返回错误 |
 
-合法 fault 会由内核补齐映射，然后返回原指令重新执行。非法 fault 会产生 `SIGSEGV`。
+用户地址访问会通过 `copy_to_user()` 这类接口。合法 page fault 可以由内核补齐映射，例如按需分配匿名页、建立文件映射或处理 COW；非法访问会返回错误或导致信号。
 
-```text
-用户态 load/store
-  |
-  v
-MMU 查页表失败
-  |
-  v
-page fault
-  |
-  +-- 合法 -> 分配页/建立映射 -> 重试原指令
-  |
-  +-- 非法 -> SIGSEGV
-```
+## 2.8 page cache、直接 I/O、阻塞 I/O
 
-`read()` 的用户缓冲区、`mmap()` 文件映射、copy-on-write、按需分配物理页，都会回到 page fault 这条线。
+普通文件读写默认通常走 page cache。读路径上，如果数据已经在 page cache，内核可以直接从缓存复制到用户缓冲区；如果不在，内核需要发起底层 I/O，把数据读入缓存，再复制给用户。
 
-## read 可能睡眠
+| 类型 | 记录 |
+| --- | --- |
+| 缓冲 I/O | 使用 C 标准库缓冲，最终仍会通过系统调用访问文件 |
+| 非缓冲 I/O | 直接调用系统调用，不经过标准库缓冲 |
+| 非直接 I/O | 使用内核 page cache，是普通文件 I/O 的常见默认路径 |
+| 直接 I/O | 绕过 page cache，常通过 `O_DIRECT` 请求 |
+| 阻塞 I/O | 数据未就绪时调用线程睡眠等待 |
+| 非阻塞 I/O | 数据未就绪时立即返回错误码，调用方稍后再试 |
 
-`read()` 不保证立刻返回。普通文件的数据可能不在 page cache 里，socket 可能还没有收到包，pipe 可能暂时没有写入端数据。
-
-数据没有准备好时，当前 task 会进入等待：
-
-```text
-当前 task 调用 read()
-  |
-  v
-数据未准备好
-  |
-  v
-设置 task state
-  |
-  v
-加入 wait queue
-  |
-  v
-schedule()
-  |
-  v
-CPU 切到另一个 runnable task
-```
-
-I/O 完成、网络包到达、pipe 写入数据后，内核唤醒等待队列上的任务，把它重新放回 runqueue。之后调度器再次选中它，它会从之前睡眠的内核路径继续执行，最终把数据复制到用户缓冲区并返回用户态。
-
-这里和小 OS 里的信号量等待很像：没有资源时，当前 task 标记为 blocked，不再参与调度；资源出现时，再把它变回 runnable。Linux 的等待队列会记录“谁在等这个事件”，而调度器只从 runnable task 里选下一个执行。
-
-用状态变化看更清楚：
+阻塞 `read()` 的状态线：
 
 ```text
 RUNNING
-  |
-  | read 等不到数据
-  v
-SLEEPING / BLOCKED
-  |
-  | I/O 完成，wakeup
-  v
-RUNNABLE
-  |
-  | scheduler 选中
-  v
-RUNNING
+  -> 数据未就绪
+  -> 加入 wait queue
+  -> schedule()
+  -> SLEEPING
+  -> I/O 完成或数据到达
+  -> wakeup
+  -> RUNNABLE
+  -> 再次 RUNNING
 ```
 
-## schedule 和上下文切换
+同步/异步 I/O 的重点是完成方式。同步 I/O 需要调用方等待数据准备和复制过程完成；异步 I/O 由内核在后台推进，完成后用事件或回调式机制通知用户态。第 10 章网络和第 12 章 tracing/BPF 会继续用这个边界。
 
-`schedule()` 是调度器入口之一。它从当前 CPU 的 runqueue 中选择下一个 runnable task，然后完成上下文切换。
+## 2.9 `schedule()`：read 卡住时 CPU 去哪里
 
-```text
-task A
-  |
-  +-- 时间片用完
-  +-- 等 I/O
-  +-- 等锁
-  +-- 被更高优先级任务抢占
-  v
-schedule()
-  |
-  v
-选择 task B
-  |
-  v
-context switch
-```
+当 `read()` 需要等 I/O、socket 数据、pipe 数据或设备事件，当前 task 会进入睡眠状态并调用调度器。
 
-上下文切换会保存当前 task 的执行状态，恢复下一个 task 的执行状态。它涉及寄存器、栈、调度状态；如果切到另一个进程，还会涉及地址空间和 TLB 影响。同一进程内线程切换通常共享 `mm_struct`，地址空间相关成本较低。
+调度器做的事可以先压缩成三步：
 
-系统调用进入内核态本身是同一个 task 切到内核执行路径。CPU 从一个 task 切到另一个 task，才是这里讨论的 context switch。
-
-小 OS 里调度器可能是一个 FIFO 队列：保存当前 task 的 context，把 runnable task 放回队列，再弹出下一个 task。Linux 有调度类、优先级、CFS/EEVDF、实时任务、多 CPU 负载均衡。第一层 mental model：
-
-保存当前 task，选择下一个 runnable task，恢复下一个 task。
-
-## syscall、exception、interrupt
-
-三类入口都能让 CPU 进入内核，但来源不同。
-
-| 入口 | 触发者 | 例子 | 同步性 | 当前任务上下文 |
-| --- | --- | --- | --- | --- |
-| syscall | 用户程序主动触发 | `read()`、`write()`、`mmap()` | 同步 | 有 |
-| exception | 当前指令触发 | page fault、除零、非法指令 | 同步 | 通常有 |
-| interrupt | 外部设备触发 | 网卡收包、磁盘完成、定时器 | 异步 | 不一定代表当前任务 |
-
-系统调用和 page fault 都和当前执行流强相关。中断可能在任意任务运行时到来；网卡中断发生时，当前 CPU 上运行的 task 未必和这个网络包有关。
-
-进程上下文里通常可以睡眠，因为内核代码代表某个具体 task 执行，能被调度走再恢复。中断上下文属于硬件事件处理路径，不能随便睡眠。
-
-## 一次 read 的完整轮廓
-
-```text
-用户态进程
-  |
-  | read(fd, buf, count)
-  v
-syscall entry
-  |
-  v
-current task_struct
-  |
-  +-- files_struct -> fdtable -> struct file
-  |
-  v
-VFS
-  |
-  +-- page cache 命中
-  |       |
-  |       v
-  |   copy_to_user(buf) -> 返回用户态
-  |
-  +-- 数据未准备好
-          |
-          v
-      wait queue
-          |
-          v
-      schedule()
-          |
-          v
-      之后被唤醒继续执行
-```
-
-这张图里已经出现了后续章节的入口：
-
-| 主题 | 入口 |
+| 步骤 | 说明 |
 | --- | --- |
-| 进程模型 | `current -> task_struct` |
-| 文件系统 | fdtable -> `struct file` -> VFS -> inode/page cache |
-| 虚拟内存 | buf -> `mm_struct` -> VMA -> page table -> page fault |
-| 调度器 | task state -> wait queue -> runqueue -> `schedule()` |
-| 并发同步 | wait queue、锁、唤醒路径 |
-| tracing/BPF | syscall、tracepoint、kprobe、调度事件、网络事件 |
+| 保存当前执行状态 | 当前 task 之后要能从睡眠点继续 |
+| 选择下一个 runnable task | 从当前 CPU 的 runqueue 和调度类里选 |
+| 恢复下一个 task | CPU 开始执行另一个 task |
 
-易混点记录：
+系统调用进入内核不一定发生上下文切换；阻塞、时间片用完、更高优先级 task 被唤醒、主动 sleep/yield 等情况才可能触发真正的 task 切换。
 
-- `read()` 进入内核时，CPU 仍然可以在同一个 task 的内核路径上执行。
-- fd 是当前 task 的文件表索引，作用域在当前文件表。
-- buf 是用户态虚拟地址，内核写它前要检查和复制。
-- `read()` 卡住时，卡住的是当前 task；CPU 会去跑别的 task。
-- page fault 不一定是程序错误，也可能是内核按需建立映射。
+## 2.10 一次 read 的对象链
 
-## 观察命令
-
-用户态 syscall：
-
-```bash
-strace -e read,write,openat,close cat data.txt
+```text
+用户态 read(fd, buf, count)
+  -> syscall entry
+  -> current task_struct
+  -> current->files
+  -> fdtable[fd]
+  -> struct file
+  -> VFS / file_operations
+  -> page cache / pipe / socket / device
+  -> copy_to_user(buf)
+  -> 返回用户态
 ```
 
-进程和线程：
+如果数据未准备好：
 
-```bash
-ps -eLf
-ls /proc/<pid>/task
-cat /proc/<pid>/status
+```text
+struct file 对应对象
+  -> 等待事件
+  -> wait queue
+  -> 当前 task 睡眠
+  -> schedule()
+  -> wakeup 后回到 read 路径
 ```
 
-地址空间：
+这条路径把后续模块串起来：
 
-```bash
-cat /proc/<pid>/maps
-cat /proc/<pid>/smaps
-pmap <pid>
-```
+| 后续模块 | `read()` 中的入口 |
+| --- | --- |
+| 进程管理 | `current`、`task_struct`、进程资源引用 |
+| 文件系统 | fdtable、`struct file`、VFS、inode、page cache |
+| 内存管理 | `buf`、`mm_struct`、VMA、page fault |
+| 调度系统 | task state、wait queue、runqueue、`schedule()` |
+| 同步机制 | 睡眠锁、等待队列、唤醒路径 |
+| tracing/BPF | syscall tracepoint、VFS/kprobe、sched tracepoint |
 
-文件描述符：
+## 2.11 观测入口
 
-```bash
-ls -l /proc/<pid>/fd
-cat /proc/<pid>/fdinfo/<fd>
-lsof -p <pid>
-```
+| 目标 | 命令 |
+| --- | --- |
+| 看系统调用 | `strace -e openat,read,write,close cat data.txt` |
+| 看 fd 指向 | `ls -l /proc/<pid>/fd` |
+| 看 fd offset 和 flags | `cat /proc/<pid>/fdinfo/<fd>` |
+| 看地址空间 | `cat /proc/<pid>/maps` |
+| 看进程状态 | `ps -o pid,ppid,stat,comm -p <pid>` |
+| 看上下文切换 | `pidstat -w 1` |
+| 看调度延迟 | `perf sched record -- sleep 3`、`perf sched latency` |
+| 看 syscall tracepoint | `bpftrace -e 'tracepoint:syscalls:sys_enter_read { @[comm] = count(); }'` |
 
-调度和上下文切换：
+最小排查顺序：
 
-```bash
-vmstat 1
-pidstat -w 1
-perf sched record -- sleep 3
-perf sched latency
-```
+1. `strace -T` 看 `read()` 是否耗时。
+2. `/proc/<pid>/fd` 确认读的是普通文件、pipe、socket 还是设备。
+3. `/proc/<pid>/fdinfo/<fd>` 看 offset 和 flags。
+4. `ps` / `pidstat` / `perf sched` 判断是否在睡眠或调度等待。
+5. 需要内核内部事件时再用 ftrace、perf trace 或 BPF。
 
-## 源码位置
+## 2.12 源码入口
 
 | 路径 | 内容 |
 | --- | --- |
 | `arch/x86/entry/entry_64.S` | x86-64 syscall/interrupt 入口 |
-| `arch/x86/entry/common.c` | syscall 进入通用 C 路径 |
-| `fs/read_write.c` | read/write 系统调用与 VFS 入口 |
-| `include/linux/sched.h` | `task_struct` 相关定义 |
+| `arch/x86/entry/common.c` | syscall 通用入口路径 |
+| `fs/read_write.c` | read/write 系统调用和 VFS 入口 |
 | `include/linux/fdtable.h` | fd table 相关结构 |
 | `include/linux/fs.h` | `struct file`、inode、`file_operations` |
+| `fs/file.c` | fd table、文件对象引用相关逻辑 |
 | `mm/memory.c` | page fault 和内存映射核心路径之一 |
 | `kernel/sched/core.c` | `schedule()` 和核心调度逻辑 |
 
-源码阅读沿路径抓对象关系：`current` 怎么连到 `files_struct`，fd 怎么连到 `struct file`，用户地址怎么连到 `mm_struct` 和 VMA，阻塞怎么连到 wait queue 和 runqueue。
+源码阅读时按对象链走：先找系统调用入口，再找 fd 解析，再看 VFS 分发，再看用户地址复制和可能的等待队列。
 
-## 例子：最小 OS 模型对照
-
-简化 OS 模型里，`read()` 这类请求可以放进 trap / syscall 入口理解：
-
-```text
-trap 入口
-  -> 保存当前 context
-  -> 找到当前 task
-  -> 根据事件类型调用 handler
-  -> 如果需要切换，调度器返回下一个 task 的 context
-```
-
-教学 OS 里的 task 通常只有 `status/context/stack` 这类字段，trap handler 按顺序执行，调度器从 runnable 队列里选下一个 task。Linux 的 `read()` 路径保留了这条骨架，但每一步都接到更具体的对象：`current`、`files_struct`、`struct file`、VFS、VMA、wait queue、runqueue。
-
-## 本章检查点与参考回答
+## 本模块检查点与参考回答
 
 | 问题 | 参考回答 |
 | --- | --- |
-| `read(fd, buf, count)` 进入内核后先检查什么？ | `fd` 要在当前 task 的 `files_struct` / fdtable 中解析成 `struct file`；`buf` 是用户虚拟地址，要通过用户地址访问接口检查和复制；`count` 要限制读写长度并处理返回值。 |
-| fd 和 `struct file` 的区别是什么？ | fd 是当前文件表里的整数索引，作用域在当前进程或共享文件表内；`struct file` 是打开文件对象，记录 offset、flags、引用计数和 `file_operations`。 |
-| 为什么内核不能直接写用户态 `buf`？ | `buf` 是用户态虚拟地址，可能无效、权限不匹配或在复制过程中触发 page fault。内核要通过 `copy_to_user()` 这类接口处理访问检查、异常和失败返回。 |
-| page fault 一定是程序错误吗？ | page fault 是地址翻译或权限检查失败后进入内核的异常。合法 fault 可用于按需分配物理页、建立文件映射或处理 COW；非法访问才会导致 `SIGSEGV` 或 syscall 返回错误。 |
-| `read()` 等不到数据时发生什么？ | 当前 task 设置睡眠状态，挂到对应等待队列，然后调用 `schedule()` 让出 CPU。数据到达或 I/O 完成后，唤醒路径把 task 放回 runqueue，之后继续执行原来的内核路径。 |
+| `read(fd, buf, count)` 进入内核后主要查什么？ | 查当前 task、当前文件表中的 fd、fd 对应的 `struct file`、用户缓冲区是否合法，以及底层对象的数据是否准备好。 |
+| fd 和文件名是什么关系？ | 文件名在 `open()` 时用于路径解析；`open()` 返回 fd 后，`read()` / `write()` 主要通过 fd 找打开文件对象，不再传文件名。 |
+| fd、`struct file`、inode 怎么分层？ | fd 是进程局部整数；`struct file` 是一次打开对象，保存 offset、flags、操作表等打开状态；inode 表示文件系统中的文件对象和元数据。 |
+| 阻塞 I/O 和非阻塞 I/O 怎么区分？ | 阻塞 I/O 在数据未就绪时让当前 task 睡眠；非阻塞 I/O 在数据未就绪时立即返回，调用方稍后重试或配合事件通知机制。 |
+| syscall 进入内核态和上下文切换有什么区别？ | syscall 是同一个 task 进入内核执行路径；上下文切换是 CPU 从一个 task 切到另一个 task。`read()` 阻塞时通常会触发后者。 |
+| page fault 一定是错误吗？ | 不一定。合法 page fault 可以用于按需分配页、建立文件映射、处理 COW；非法访问才会导致错误返回或信号。 |
+| 为什么 `read()` 可以读 socket、pipe、设备？ | VFS 和 fd 模型把不同内核对象统一到文件接口下，具体行为由 `struct file` 的操作表和底层对象决定。 |
 
-## 本章参考
+## 本模块参考
 
-- [Linux kernel documentation: The Linux kernel user's and administrator's guide](https://docs.kernel.org/admin-guide/)
-- [Linux kernel documentation: Adding a New System Call](https://docs.kernel.org/process/adding-syscalls.html)
-- [Linux kernel documentation: Core API](https://docs.kernel.org/core-api/index.html)
-- [Linux kernel documentation: Memory Management](https://docs.kernel.org/mm/index.html)
-- [Linux kernel documentation: Filesystems](https://docs.kernel.org/filesystems/index.html)
-- Remzi H. Arpaci-Dusseau and Andrea C. Arpaci-Dusseau, [Operating Systems: Three Easy Pieces](https://pages.cs.wisc.edu/~remzi/OSTEP/)
-- [小林 Code：图解系统](https://xiaolincoding.com/os/)
+- 小林 Code《图解系统》4.1 进程、线程基础知识
+- 小林 Code《图解系统》6.1 文件系统
+- Remzi H. Arpaci-Dusseau and Andrea C. Arpaci-Dusseau, *Operating Systems: Three Easy Pieces*
 - Michael Kerrisk, *The Linux Programming Interface*
 - Robert Love, *Linux Kernel Development*
+- Linux Kernel Documentation: Filesystems
+- Linux Kernel Documentation: Memory Management
+- Linux Kernel Documentation: Core API

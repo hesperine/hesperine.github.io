@@ -7,6 +7,14 @@ tags: [Linux, Linux Kernel, Memory Management, Page Allocator, OOM]
 
 虚拟内存描述进程看到的地址空间，物理内存管理描述机器上的页怎样被分配、缓存、回收。Linux 用 `struct page` 表示物理页，用 buddy allocator 管连续页框，用 slab/slub 管小对象，用 LRU/reclaim 回收 page cache 和匿名页。
 
+三层阅读线索：
+
+| 层次 | 本章对应内容 |
+| --- | --- |
+| 小林 Code / 八股 | 内存满了会怎样、物理内存和虚拟内存关系、缓存和回收 |
+| OSTEP / 教材 | 物理页管理、空闲空间管理、页替换、swap |
+| Linux 实现 | `struct page`、zone/node、buddy allocator、slub、LRU、reclaim、OOM killer |
+
 ## OS 抽象
 
 物理内存按页管理。一个进程访问虚拟地址时，最终要落到某个物理页；内核自己也需要内存存放 task、inode、socket、页表、缓冲区等对象。
@@ -74,7 +82,7 @@ kmem_cache
   +-- backed by pages from buddy allocator
 ```
 
-用户态的 `malloc()` 管用户地址空间里的堆；内核的 slab/slub 管内核对象。二者不是同一层。
+用户态的 `malloc()` 管用户地址空间里的堆；内核的 slab/slub 管内核对象。二者处在不同层次。
 
 ## page cache 与回收
 

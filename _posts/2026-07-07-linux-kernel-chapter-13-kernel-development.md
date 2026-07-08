@@ -7,6 +7,14 @@ tags: [Linux, Linux Kernel, Kernel Development, QEMU, Debugging]
 
 内核学习最后要回到源码和实验。能解释概念只是第一步；能找到路径、改配置、跑实验、看日志、定位崩溃，学习才会变成可验证的能力。
 
+三层阅读线索：
+
+| 层次 | 本章对应内容 |
+| --- | --- |
+| 小林 Code / 八股 | 把面试问题沉淀成可复现的小实验 |
+| OSTEP / 教材 | 用项目和实验巩固 OS 机制 |
+| Linux 实现 | 源码树、Kconfig、Makefile、module、QEMU、oops/panic、selftests |
+
 ## 源码树入口
 
 Linux 源码目录可以按子系统记：
@@ -37,7 +45,7 @@ make menuconfig
 make -j$(nproc)
 ```
 
-当前学习阶段重点不是完整编译所有发行版内核，而是能看懂：
+当前学习阶段重点放在看懂这些文件：
 
 | 文件 | 作用 |
 | --- | --- |

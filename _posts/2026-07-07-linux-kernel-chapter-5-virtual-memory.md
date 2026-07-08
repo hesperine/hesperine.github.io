@@ -9,6 +9,14 @@ tags: [Linux, Linux Kernel, Memory Management, Virtual Memory, mmap]
 
 内存管理的第一条主线是地址翻译：用户态指针是虚拟地址，CPU/MMU 查页表得到物理地址。第二条主线是按需分配：虚拟地址范围可以先存在，物理页等第一次访问时再分配或加载。第三条主线是权限和隔离：每个进程有自己的地址空间，页表项记录读写执行权限。
 
+三层阅读线索：
+
+| 层次 | 本章对应内容 |
+| --- | --- |
+| 小林 Code / 八股 | 为什么要有虚拟内存、malloc、缺页、中断、COW、4GB/8GB 这类问题 |
+| OSTEP / 教材 | 地址空间、分页、TLB、page fault、地址翻译 |
+| Linux 实现 | `mm_struct`、`vm_area_struct`、page table、`mmap()`、fault handler、`/proc/<pid>/maps` |
+
 ## OS 抽象
 
 地址空间是进程看到的内存视图。典型布局包括代码段、只读数据、全局数据、堆、mmap 区域、共享库、用户栈。

@@ -7,6 +7,14 @@ tags: [Linux, Linux Kernel, Network, Socket, TCP, XDP]
 
 网络系统把应用的 socket I/O 接到协议栈、队列、网卡驱动和中断/NAPI。小林 Code 里的网络八股通常从 TCP/IP、三次握手、四次挥手、拥塞控制、epoll 开始；Linux 笔记要继续落到 socket、`sk_buff`、wait queue、NAPI、qdisc、netfilter 和 BPF hook。
 
+三层阅读线索：
+
+| 层次 | 本章对应内容 |
+| --- | --- |
+| 小林 Code / 八股 | I/O 多路复用、零拷贝、Reactor/Proactor、TCP/IP 高频问题 |
+| OSTEP / 教材 | I/O 抽象、事件等待、并发服务器模型 |
+| Linux 实现 | socket fd、`struct sock`、`sk_buff`、NAPI、qdisc、epoll wait queue、XDP/tc |
+
 ## OS 抽象
 
 网络 I/O 是异步事件密集的 I/O。应用通过 socket fd 读写字节流或数据报；内核负责协议处理、缓冲、重传、拥塞控制、路由、排队、网卡收发。
@@ -147,7 +155,7 @@ socket 到数据
 唤醒 epoll 等待者
 ```
 
-epoll 的高效来自事件驱动和就绪队列，不是每次都线性扫描所有 fd。
+epoll 的高效来自事件驱动和就绪队列，避免每次线性扫描所有 fd。
 
 ## 术语表 / 八股检查点
 
