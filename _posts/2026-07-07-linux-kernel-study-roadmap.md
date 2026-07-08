@@ -1,213 +1,228 @@
-﻿---
+---
 title: Linux 内核学习路线：从 OS 抽象到真实机制
 date: 2026-07-07 17:00:00 +0800
 categories: [学习笔记, OS与Linux内核笔记]
 tags: [Linux, Linux Kernel, Operating System, OSTEP, BPF]
 ---
 
-这组笔记按能力组织，不按名词清单组织。每个主题都保留 OS 抽象、Linux 实现、真实路径、观测入口和术语检查点。
+这组笔记按小林 Code《图解系统》的系统方向目录推进。正文采用阅读批注写法：先整理基础概念、图解脉络和八股问法，再补 OSTEP 的抽象模型、Linux 的真实对象、源码路径和观测入口。
 
-固定结构：
+单篇文章不强制覆盖一个完整章节。一个小林 Code 章节可以拆成多篇笔记：基础问题一篇，OSTEP 对照一篇，Linux 实现路径一篇，源码或实验再单独成篇。
 
-```text
-1. OS 抽象
-2. Linux 对应对象
-3. 一条真实路径
-4. 术语表 / 八股检查点
-5. 可观测入口
-6. 源码入口
-7. 例子或最小模型
-```
+## 写法
 
-名词需要记，但名词放在路径之后整理。正文先回答“这个机制怎么走”，术语表再回答“这个词怎么定义、和相邻概念有什么边界”。这样既能读源码，也能应付面试里的概念题。
+每篇笔记从小林 Code 的问题顺序出发，再按需要追加两层批注。
 
-参考 OSTEP 的大结构：虚拟化、并发、持久化。Linux 侧补真实对象：`task_struct`、`mm_struct`、VMA、页表、`struct file`、inode、VFS、page cache、runqueue、wait queue、futex、RCU、tracepoint、BPF。
-
-资料分层：
-
-| 层次 | 用法 | 主要资料 |
+| 层次 | 作用 | 写进笔记里的形式 |
 | --- | --- | --- |
-| OS 概念 | 建立抽象和基本模型 | OSTEP、CSAPP、Operating System Concepts |
-| Linux 用户态接口 | 确认 syscall、进程、fd、信号等语义 | TLPI、APUE、man-pages |
-| Linux 内核实现 | 确认结构体、路径、锁和实现边界 | Linux Kernel Documentation、Linux 源码、Linux Kernel Development |
-| 性能与观测 | 把机制接到真实机器和工具 | Systems Performance、perf/ftrace/BPF 文档 |
-| 八股与图解 | 整理高频问法、术语边界和面试表达 | 小林 Code《图解系统》、常见 OS/Linux 面经 |
+| 小林 Code / 八股 | 确定章节顺序、基础概念、常见问法 | 问题索引、术语表、参考回答 |
+| OSTEP / 教材 | 补 OS 抽象、机制边界、算法模型 | 模型对照、状态转换、机制/策略区分 |
+| Linux 实现 | 落到真实结构体、函数路径和观察入口 | Linux 对象、源码入口、`/proc`、tracepoint、实验命令 |
 
-每章最后的术语表会对齐八股问法，但正文的实现判断以 Linux 官方文档、源码和经典书籍为主。
+每篇笔记至少回答三个问题：
 
-## 模块主线
+| 问题 | 说明 |
+| --- | --- |
+| 小林 Code 在讲什么？ | 这一节的基础问题和八股入口是什么 |
+| OS 教材里对应什么抽象？ | 进程、地址空间、调度、文件、I/O、同步等模型怎么解释 |
+| Linux 里落到什么对象？ | 结构体、函数、状态、tracepoint、命令入口是什么 |
 
-这组笔记按六个系统模块推进。小林 Code《图解系统》适合用来整理高频问题和图解脉络；Linux 笔记负责把这些问题落到真实结构体、路径和观测工具上。
+## 总体顺序
 
-| 模块 | 先掌握的问题 | Linux 落点 | 对应章节 |
+整体章节安排按小林 Code《图解系统》系统方向目录走。前九个模块是主线，Linux 内核专项内容放在主线之后。
+
+| 顺序 | 小林 Code 主线 | 本系列写法 | 当前入口 / 后续拆分 |
 | --- | --- | --- | --- |
-| 进程管理 | 进程和线程区别、进程状态、进程创建、进程退出、进程间通信 | `task_struct`、pid/tgid、`fork()`、`clone()`、`execve()`、`exit()`、signal、pipe/socket/futex | 1、2、3、8、11 |
-| 调度系统 | 调度算法、上下文切换、阻塞和唤醒、抢占、多核调度 | task state、`rq`、scheduling class、CFS/EEVDF、`schedule()`、`try_to_wake_up()` | 1、3、4、8 |
-| 内存管理 | 虚拟内存、分页、页表、缺页、页面置换、内存分配 | `mm_struct`、VMA、page table、page fault、`mmap()`、COW、`struct page`、buddy/slub、reclaim | 1、2、5、6 |
-| 文件系统 | fd、文件系统层次、inode、目录项、缓存、文件读写 | `files_struct`、`struct file`、dentry、inode、VFS、page cache、writeback | 2、7 |
-| 设备管理 | 中断、DMA、驱动、字符设备、块设备、异步处理 | IRQ、softirq、workqueue、driver model、device file、block layer、request queue | 7、9 |
-| 网络系统 | socket、TCP/IP、收发包、I/O 多路复用、网络观测 | socket、`sk_buff`、NAPI、TCP/IP、epoll、netfilter、qdisc、XDP/tc BPF | 10、12 |
+| 0 | 阅读准备 | 环境、观测工具、如何读 Linux 机器状态 | [环境与观察工具](/posts/linux-kernel-chapter-0-observation-tools/) |
+| 1 | 硬件结构 | CPU 执行、存储层次、Cache、中断的 OS 背景 | [硬件结构阅读批注](/posts/linux-kernel-hardware-structure/) |
+| 2 | 操作系统结构 | 内核、系统调用、Linux/Windows 内核结构对照 | [操作系统结构阅读批注](/posts/linux-kernel-os-structure/) |
+| 3 | 内存管理 | 虚拟内存、分段、分页、多级页表、TLB、Linux 内存管理 | [内存管理阅读批注](/posts/linux-kernel-memory-management/)、[虚拟内存、VMA 与 page fault](/posts/linux-kernel-chapter-5-virtual-memory/)、[物理内存管理](/posts/linux-kernel-chapter-6-physical-memory/) |
+| 4 | 进程与线程 | 进程状态、PCB、上下文切换、线程、IPC、同步、死锁 | [进程与线程阅读批注](/posts/linux-kernel-process-thread/)、[进程模型与 task 生命周期](/posts/linux-kernel-chapter-3-process-model/)、[同步、futex 与 RCU](/posts/linux-kernel-chapter-8-synchronization-futex-rcu/) |
+| 5 | 调度算法 | 进程调度、页面置换、磁盘调度；Linux 调度器放在批注里 | [调度算法阅读批注](/posts/linux-kernel-scheduling-algorithms/)、[调度器、runqueue 与唤醒路径](/posts/linux-kernel-chapter-4-scheduler/) |
+| 6 | 文件系统 | VFS、fd、inode、目录项、page cache、文件 I/O | [文件系统阅读批注](/posts/linux-kernel-filesystem/)、[文件系统、VFS 与 page cache](/posts/linux-kernel-chapter-7-filesystem-vfs/)、[read 路径](/posts/linux-kernel-chapter-2-read-path/) |
+| 7 | 设备管理 | 设备控制器、驱动、中断、块层、I/O 软件分层 | [设备管理阅读批注](/posts/linux-kernel-device-management/)、[设备管理、中断与 deferred work](/posts/linux-kernel-chapter-9-device-interrupts/) |
+| 8 | 网络系统 | Linux 收发包、socket、I/O 多路复用、Reactor/Proactor | [网络系统阅读批注](/posts/linux-kernel-network-system/)、[网络系统、socket 与收发包路径](/posts/linux-kernel-chapter-10-network-stack/) |
+| 9 | Linux 命令 | 系统、进程、内存、文件、网络观测命令 | [Linux 命令阅读批注](/posts/linux-kernel-commands/)、[环境与观察工具](/posts/linux-kernel-chapter-0-observation-tools/) |
+| 10 | 额外 Linux 内核专题 | namespace/cgroup、tracing/perf/BPF、内核源码开发、横切路径实验 | [额外专题总览](/posts/linux-kernel-extra-topics/)、[namespace/cgroup](/posts/linux-kernel-chapter-11-namespace-cgroup/)、[tracing/perf/BPF](/posts/linux-kernel-chapter-12-tracing-bpf/)、[内核开发方法](/posts/linux-kernel-chapter-13-kernel-development/) |
 
-每个模块的写法保持一致：
+现有入口文章后续会按这个顺序重排和拆分。当前文件名里的编号仅用于链接兼容。
+
+## 章节拆分原则
 
-```text
-小林 Code / 八股问题
-  -> OS 抽象
-  -> Linux 对象
-  -> 一条真实路径
-  -> 观测命令
-  -> 源码入口
-  -> 参考回答
-```
+小林 Code 的每个大章节可以拆成几类笔记。
 
-例如“进程和线程的区别”不会只停在概念回答，而是继续落到 `task_struct`、`mm_struct`、`files_struct`、pid/tgid、`clone()` flags 和 `/proc/<pid>/task`。 “虚拟内存有什么用”会继续落到 VMA、页表、page fault、COW、`/proc/<pid>/maps`。 “epoll 为什么高效”会放到网络系统和文件描述符模型里，再接 socket wait queue 和 wakeup。
+| 类型 | 内容 | 例子 |
+| --- | --- | --- |
+| 基础笔记 | 按小林 Code 的问题顺序整理概念和八股 | 进程是什么、线程是什么、PCB 是什么 |
+| 模型批注 | 对照 OSTEP 或教材模型，补机制边界 | ready/running/blocked、机制与策略、调度指标 |
+| Linux 批注 | 补 Linux 对象、源码路径、命令入口 | `task_struct`、`mm_struct`、VFS、runqueue |
+| 路径笔记 | 用一条真实路径串对象 | `read()`、`fork()`、page fault、收包路径 |
+| 实验笔记 | 用命令、trace、最小代码验证 | `strace`、`perf sched`、`bpftrace`、`/proc` |
 
-## 0. 环境与观察工具
+正文里不要把所有内容都堆进同一篇。基础问题讲清楚后，Linux 实现和源码路径可以独立成篇。
 
-能力：知道一台 Linux 机器能看什么、从哪里看。
+## 各章批注重点
+
+## 0. 阅读准备：环境与观察工具
 
-内容：`uname`、`/proc`、`/sys`、内核配置、`strace`、`perf`、ftrace、tracefs、`bpftrace`。
+小林 Code 后面很多章节会用到 Linux 命令和现象观察。这里先记录一组最小工具。
 
-术语：procfs、sysfs、tracefs、tracepoint、kprobe、uprobe、perf event、BPF program、capability。
+| 方向 | 入口 |
+| --- | --- |
+| 系统信息 | `uname -a`、`/etc/os-release`、内核配置 |
+| 进程线程 | `ps`、`top -H`、`/proc/<pid>/status`、`/proc/<pid>/task` |
+| 地址空间 | `/proc/<pid>/maps`、`smaps` |
+| 文件描述符 | `/proc/<pid>/fd`、`fdinfo`、`lsof` |
+| 系统调用 | `strace`、`perf trace` |
+| 调度 | `vmstat`、`pidstat -w`、`perf sched` |
+| 内核事件 | ftrace、tracefs、`bpftrace` |
 
-产出：后续每章都能找到至少一种用户态观察入口。
+## 1. 硬件结构
 
-## 1. OS 基本抽象复习
+这一部分作为 OS/Linux 的硬件背景，不单独追求硬件细节大全。
 
-能力：把 OS 课里的词和 Linux 对象对上。
+| 小林 Code 主题 | 本系列批注 |
+| --- | --- |
+| CPU 如何执行程序 | 指令执行、寄存器、程序计数器、上下文保存 |
+| 存储器层次结构 | 寄存器、Cache、内存、SSD/HDD 与 OS 缓存 |
+| CPU Cache | cache line、局部性、伪共享、同步原语成本 |
+| CPU 如何选择线程 | 从硬件执行切到 OS 调度入口 |
+| 软中断 | 中断、软中断、网络收包和 deferred work |
 
-内容：用户态 / 内核态，进程 / 线程 / 协程 / task，地址空间，文件描述符，系统调用，异常 / 中断，上下文切换，阻塞 / 唤醒。
+Linux 落点：`/proc/interrupts`、softirq、NAPI、调度中断、Cache 对锁和调度的影响。
 
-术语：process、thread、task、address space、virtual address、page table、fd、syscall、exception、interrupt、context switch、kernel stack、user stack。
+## 2. 操作系统结构
 
-产出：能解释“进入内核态”和“上下文切换”的区别，能解释 fd、地址空间、task 的边界。
+小林 Code 这里主要讲内核、Linux 内核特征、Windows 内核对照。批注重点放在 Linux 内核的边界。
 
-## 2. 系统调用与 read() 路径
+| 问题 | Linux 批注 |
+| --- | --- |
+| 内核是什么 | 管理 CPU、内存、文件系统、设备、网络和安全边界 |
+| syscall 是什么 | 用户态进入内核态的正式入口 |
+| Linux 内核有什么特点 | 多任务、SMP、ELF、宏内核、模块化 |
+| 用户态/内核态怎么分 | 权限级别、地址空间隔离、入口路径 |
 
-能力：从一行 `read(fd, buf, count)` 追到内核对象。
+后续 `read()`、`fork()`、page fault、网络收包都从这里的边界展开。
 
-内容：syscall entry、`current`、`task_struct`、`files_struct`、fdtable、`struct file`、VFS、`copy_to_user()`、page fault、wait queue、`schedule()`。
+## 3. 内存管理
 
-术语：syscall number、syscall ABI、`current`、fdtable、VFS、`file_operations`、user pointer、`EFAULT`、blocking I/O、wait queue。
+按小林 Code 的顺序：虚拟内存、内存分段、内存分页、多级页表、TLB、段页式内存管理、Linux 内存管理。
 
-产出：能画出 `read()` 的对象链，能用 `strace`、`/proc/<pid>/fd`、`perf sched` 看其中一部分。
+| 小林 Code 主题 | Linux 批注 |
+| --- | --- |
+| 为什么要有虚拟内存 | 进程地址空间、隔离、权限、按需分配 |
+| 内存分段 | 历史模型；现代 Linux 主要依赖分页 |
+| 内存分页 | page table、PTE、page frame |
+| 多级页表 | 节省页表内存，配合硬件页表遍历 |
+| TLB | 地址翻译缓存、TLB shootdown |
+| Linux 内存管理 | `mm_struct`、VMA、page fault、COW、page cache |
 
-## 3. 进程模型与 task 生命周期
+额外补：`mmap` 区域、匿名页/文件页、RSS/PSS、buddy/slub、reclaim、OOM。
 
-能力：理解 Linux 如何创建、运行、替换、退出和回收执行实体。
+## 4. 进程与线程
 
-内容：`task_struct`、pid/tgid、thread group、`fork()`、`clone()` / `clone3()`、`pthread_create()`、`execve()`、`exit()`、`wait()`、zombie、signal。
+这一章是整个系列的核心基础。按小林 Code 的顺序拆。
 
-术语：pid、tgid、thread group、COW、`CLONE_VM`、`CLONE_FILES`、`CLONE_THREAD`、zombie、orphan、reparent、signal mask、pending signal。
+| 小林 Code 主题 | Linux 批注 |
+| --- | --- |
+| 进程 | 程序运行实例、资源边界、`task_struct` |
+| 进程状态 | ready/running/blocked 到 Linux `R/S/D/T/Z` |
+| 进程控制结构 | PCB 到 `task_struct`、`mm_struct`、`files_struct` |
+| 进程控制 | `fork()`、`clone()`、`execve()`、`exit()`、`wait()` |
+| 上下文切换 | `schedule()`、runqueue、线程/进程切换成本 |
+| 线程 | Linux 线程也是 task；pid/tgid、`clone()` flags |
+| IPC | pipe、message queue、shared memory、signal、socket |
+| 多线程同步 | mutex、semaphore、condition variable、futex、RCU |
+| 死锁 | 四个条件、排查、锁顺序 |
 
-产出：能解释进程和线程在 Linux 里的资源共享差异，能沿 `clone -> exec -> exit -> wait` 读源码。
+额外补：Linux task 生命周期、等待队列、信号、线程组、调度类。
 
-## 4. 调度器、阻塞与唤醒
+## 5. 调度算法
 
-能力：理解 task 怎样让出 CPU、怎样被唤醒、怎样再次运行。
+小林 Code 会集中讲进程调度、页面置换、磁盘调度。这里不把教材算法当术语堆砌，而是先讲清楚适用问题。
 
-内容：task state、runqueue、scheduling class、CFS / EEVDF、real-time scheduling、preemption、wakeup、scheduling latency、多 CPU 负载均衡。
+| 小林 Code 主题 | Linux 批注 |
+| --- | --- |
+| FCFS/SJF/HRRN/RR/优先级/多级反馈队列 | 教材调度算法的目标和代价 |
+| 页面置换算法 | FIFO、LRU、Clock、LFU 与 Linux reclaim 的关系 |
+| 磁盘调度算法 | 机械磁盘模型、块层、电梯调度的历史背景 |
+| Linux 调度器 | CFS/EEVDF、实时调度、runqueue、wakeup latency |
 
-术语：runnable、running、sleeping、`rq`、`sched_entity`、`vruntime`、nice、weight、time slice、preemption、affinity、migration、`sched_switch`、`sched_wakeup`。
+调度模块会拆成两类：教材算法笔记和 Linux 调度器笔记。
 
-产出：能区分睡眠等待事件和 runnable 后等待 CPU，能用 `perf sched` 或 BPF tracepoint 观察调度延迟。
+## 6. 文件系统
 
-## 5. 虚拟内存、VMA 与 page fault
+按小林 Code 的顺序：文件系统基本组成、VFS、文件使用、文件存储、文件系统结构、文件 I/O。
 
-能力：理解虚拟地址如何变成物理页。
+| 小林 Code 主题 | Linux 批注 |
+| --- | --- |
+| 文件系统基本组成 | inode、目录项、超级块、数据块 |
+| 虚拟文件系统 | VFS、`struct file`、dentry、inode、`file_operations` |
+| 文件使用 | `open()`、fd、`read()`、`write()`、`close()` |
+| 文件存储 | 连续/链式/索引分配，Ext 系列实现背景 |
+| 文件系统结构 | 挂载、块组、元数据、日志 |
+| 文件 I/O | buffered/direct、blocking/nonblocking、sync/async、page cache |
 
-内容：`mm_struct`、`vm_area_struct`、page table、page fault、`mmap()`、anonymous mapping、file-backed mapping、copy-on-write、TLB。
+额外补：`fork()` 后 fd 继承、file offset 共享、page cache、writeback。
 
-术语：virtual address、physical page、PTE、VMA、RSS、PSS、minor fault、major fault、COW、TLB shootdown、anonymous page、file-backed page。
+## 7. 设备管理
 
-产出：能解释 `mmap` 区域是什么，能从 `/proc/<pid>/maps` 对应到 VMA。
+小林 Code 从“键盘敲入 A 字母发生了什么”切入。这个模块按一次设备事件展开。
 
-## 6. 物理内存管理
+| 小林 Code 主题 | Linux 批注 |
+| --- | --- |
+| 设备控制器 | MMIO/PIO、寄存器、DMA |
+| 设备驱动程序 | driver model、字符设备、块设备 |
+| I/O 软件分层 | VFS、block layer、request queue |
+| 中断处理 | IRQ、softirq、tasklet、workqueue |
 
-能力：理解机器上的物理页怎么分配、缓存、回收。
+额外补：中断上下文不能随便睡眠，deferred work 为什么存在。
 
-内容：`struct page`、NUMA node、zone、buddy allocator、slub、LRU、reclaim、swap、OOM killer。
+## 8. 网络系统
 
-术语：page frame、zone、node、order、slab、slub、LRU、active/inactive list、reclaim、compaction、OOM。
+小林 Code 的网络系统部分适合直接作为网络栈笔记主线。
 
-产出：能把“进程内存大”和“系统物理内存紧张”分开看。
+| 小林 Code 主题 | Linux 批注 |
+| --- | --- |
+| Linux 如何收发网络包 | NIC、DMA、IRQ、NAPI、`sk_buff`、协议栈 |
+| 文件传输性能 | page cache、零拷贝、`sendfile()`、`splice()` |
+| I/O 多路复用 | select/poll/epoll、wait queue、ready list |
+| Reactor/Proactor | 事件循环模型、同步/异步 I/O 边界 |
+| 网络性能指标 | `ss`、`ip`、`sar`、`tcpdump`、BPF |
 
-## 7. 文件系统、VFS 与 page cache
+额外补：XDP、tc BPF、netfilter、qdisc。
 
-能力：理解 fd、路径名、inode、缓存页之间的关系。
+## 9. Linux 命令
 
-内容：fd、`struct file`、dentry、inode、superblock、path lookup、mount、`file_operations`、page cache、buffered I/O、direct I/O、writeback。
+命令部分不单独做成工具清单，而是给每个模块配观察入口。
 
-术语：fd、open file description、dentry、inode、superblock、mount namespace、page cache、dirty page、writeback、direct I/O。
+| 模块 | 命令入口 |
+| --- | --- |
+| 进程线程 | `ps`、`top`、`pidstat`、`/proc/<pid>` |
+| 内存 | `free`、`vmstat`、`/proc/meminfo`、`/proc/<pid>/smaps` |
+| 文件系统 | `ls -li`、`stat`、`lsof`、`df`、`mount` |
+| I/O | `iostat`、`pidstat -d`、`blktrace` |
+| 网络 | `ss`、`ip`、`tcpdump`、`sar -n` |
+| 内核事件 | `perf`、ftrace、`bpftrace` |
 
-产出：能解释 `open()` 两次同一文件、`fork()` 继承 fd、文件偏移共享的差异。
+## 10. 额外 Linux 内核专题
 
-## 8. 同步、锁、futex 与 RCU
+这些内容作为扩展专题放在最后。
 
-能力：理解并发路径里谁能睡眠、谁只能自旋、谁依赖读侧无锁。
-
-内容：pthread mutex、condition variable、futex、wait queue、spinlock、mutex、rwsem、atomic、memory barrier、RCU、completion。
-
-术语：critical section、race condition、deadlock、futex wait/wake、spinlock、sleepable lock、memory ordering、RCU read-side、grace period。
-
-产出：能解释用户态锁为什么大多数时候不进内核，竞争时怎样落到 futex。
-
-## 9. 设备管理、中断与 deferred work
-
-能力：理解设备怎样接入内核，硬件事件怎样进入内核，以及为什么很多工作要延后处理。
-
-内容：设备文件、字符设备、块设备、driver model、DMA、IRQ、softirq、tasklet、workqueue、timer / hrtimer、NAPI。
-
-术语：device driver、character device、block device、major/minor number、DMA、interrupt context、process context、top half、bottom half、softirq、workqueue、timer wheel、hrtimer、NAPI polling。
-
-产出：能解释用户态 fd 怎样连到设备文件，能解释中断上下文为什么不能随便睡眠，能把设备事件接到 deferred work。
-
-## 10. 网络栈
-
-能力：理解 packet 从网卡到 socket 的主要路径。
-
-内容：socket、`sk_buff`、NAPI、TCP/IP、netfilter、qdisc、tc、XDP。
-
-术语：socket buffer、RX/TX queue、NAPI、GRO/GSO、qdisc、netfilter hook、XDP、tc BPF。
-
-产出：为 BPF/XDP 和网络性能观测铺底。
-
-## 11. namespace、cgroup 与容器
-
-能力：理解容器依赖的隔离和资源控制机制。
-
-内容：pid namespace、mount namespace、network namespace、user namespace、cgroup v2、cpu controller、memory controller、io controller。
-
-术语：namespace、cgroup、controller、quota、weight、pressure stall information、container runtime。
-
-产出：能解释 namespace 管“看见什么”，cgroup 管“能用多少”。
-
-## 12. tracing、perf 与 BPF
-
-能力：把前面学过的机制接到观测和扩展点上。
-
-内容：procfs、sysfs、debugfs、tracefs、ftrace、perf、tracepoint、kprobe、uprobe、BPF map、helper、verifier、BTF、CO-RE、libbpf。
-
-术语：tracepoint、kprobe、uprobe、perf event、BPF map、helper、verifier、BTF、CO-RE、XDP、LSM BPF、sched_ext。
-
-产出：能写短的 `bpftrace` 观察 syscall、调度、I/O、网络事件。
-
-## 13. 内核开发方法
-
-能力：能读源码、改配置、做小实验、定位崩溃。
-
-内容：源码树结构，Kconfig / Makefile，kernel module，QEMU / VM，dynamic debug，panic / oops，patch workflow。
-
-术语：Kconfig、module、symbol、GPL export、oops、panic、taint、bisect、patch。
-
-产出：能把学习从“读文章”推进到“读源码和做实验”。
+| 专题 | 内容 |
+| --- | --- |
+| `read()` 横切路径 | syscall、fd、VFS、用户地址、page cache、wait queue、调度 |
+| namespace / cgroup | 容器的隔离和资源控制机制 |
+| tracing / perf / BPF | tracepoint、kprobe、uprobe、BPF map、verifier、BTF、CO-RE |
+| Linux 内核源码阅读 | 源码树、Kconfig、module、QEMU、oops/panic、patch workflow |
+| 最小实验 | 用小代码或命令验证进程、调度、内存、文件、网络路径 |
 
 ## 参考资料
 
+- 小林 Code《图解系统》
 - [Operating Systems: Three Easy Pieces](https://pages.cs.wisc.edu/~remzi/OSTEP/)
 - [Linux Kernel Documentation](https://docs.kernel.org/)
 - [Linux Kernel Labs](https://linux-kernel-labs.github.io/refs/heads/master/)
-- [小林 Code：图解系统](https://xiaolincoding.com/os/)
 - Michael Kerrisk, *The Linux Programming Interface*
 - Robert Love, *Linux Kernel Development*
 - Brendan Gregg, *Systems Performance*
