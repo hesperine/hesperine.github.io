@@ -54,7 +54,7 @@ tags: [Linux, Linux Kernel, Operating System, BPF, Container]
 | `findmnt -t cgroup2` | cgroup v2 挂载点 |
 | `nsenter -t <pid> -p -m -n sh` | 进入目标进程 namespace |
 
-对应深挖：[namespace、cgroup 与容器机制](/posts/linux-kernel-chapter-11-namespace-cgroup/)。
+这部分后续可以单独展开容器启动路径、cgroup v2 控制文件和 CPU/内存限制实验。
 
 ## 3. tracing / perf / BPF：把内核变成可观察对象
 
@@ -79,7 +79,7 @@ tags: [Linux, Linux Kernel, Operating System, BPF, Container]
 | TCP 重传是否增加 | TCP tracepoint 或 `ss -ti` |
 | 某函数是否成为热点 | `perf top`、kprobe |
 
-对应深挖：[tracing、perf 与 BPF](/posts/linux-kernel-chapter-12-tracing-bpf/)。
+BPF 相关内容后续按 tracepoint、kprobe、uprobe、map、verifier、BTF/CO-RE 的顺序展开。
 
 ## 4. 源码阅读和实验环境
 
@@ -98,7 +98,7 @@ tags: [Linux, Linux Kernel, Operating System, BPF, Container]
 
 实验环境优先 VM/QEMU。内核开发最小闭环是：改配置、编译、启动、触发路径、收集日志、定位 oops/panic、回滚重试。
 
-对应深挖：[源码阅读、实验环境与内核开发方法](/posts/linux-kernel-chapter-13-kernel-development/)。
+源码阅读和实验环境后续放在独立专题里整理，重点是源码树入口、Kconfig、QEMU、模块、日志和 patch workflow。
 
 ## 5. 最小实验清单
 

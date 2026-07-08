@@ -31,21 +31,21 @@ tags: [Linux, Linux Kernel, Operating System, OSTEP, BPF]
 
 整体章节安排按小林 Code《图解系统》系统方向目录走。前九个模块是主线，Linux 内核专项内容放在主线之后。
 
-| 顺序 | 小林 Code 主线 | 本系列写法 | 当前入口 / 后续拆分 |
+| 顺序 | 小林 Code 主线 | 本系列写法 | 正式入口 |
 | --- | --- | --- | --- |
-| 0 | 阅读准备 | 环境、观测工具、如何读 Linux 机器状态 | [环境与观察工具](/posts/linux-kernel-chapter-0-observation-tools/) |
+| 0 | 阅读准备 | 环境、观测工具、如何读 Linux 机器状态 | 并入各章观测入口 |
 | 1 | 硬件结构 | CPU 执行、存储层次、Cache、中断的 OS 背景 | [硬件结构阅读批注](/posts/linux-kernel-hardware-structure/) |
 | 2 | 操作系统结构 | 内核、系统调用、Linux/Windows 内核结构对照 | [操作系统结构阅读批注](/posts/linux-kernel-os-structure/) |
-| 3 | 内存管理 | 虚拟内存、分段、分页、多级页表、TLB、Linux 内存管理 | [内存管理阅读批注](/posts/linux-kernel-memory-management/)、[虚拟内存、VMA 与 page fault](/posts/linux-kernel-chapter-5-virtual-memory/)、[物理内存管理](/posts/linux-kernel-chapter-6-physical-memory/) |
-| 4 | 进程与线程 | 进程状态、PCB、上下文切换、线程、IPC、同步、死锁 | [进程与线程阅读批注](/posts/linux-kernel-process-thread/)、[进程模型与 task 生命周期](/posts/linux-kernel-chapter-3-process-model/)、[同步、futex 与 RCU](/posts/linux-kernel-chapter-8-synchronization-futex-rcu/) |
-| 5 | 调度算法 | 进程调度、页面置换、磁盘调度；Linux 调度器放在批注里 | [调度算法阅读批注](/posts/linux-kernel-scheduling-algorithms/)、[调度器、runqueue 与唤醒路径](/posts/linux-kernel-chapter-4-scheduler/) |
-| 6 | 文件系统 | VFS、fd、inode、目录项、page cache、文件 I/O | [文件系统阅读批注](/posts/linux-kernel-filesystem/)、[文件系统、VFS 与 page cache](/posts/linux-kernel-chapter-7-filesystem-vfs/)、[read 路径](/posts/linux-kernel-chapter-2-read-path/) |
-| 7 | 设备管理 | 设备控制器、驱动、中断、块层、I/O 软件分层 | [设备管理阅读批注](/posts/linux-kernel-device-management/)、[设备管理、中断与 deferred work](/posts/linux-kernel-chapter-9-device-interrupts/) |
-| 8 | 网络系统 | Linux 收发包、socket、I/O 多路复用、Reactor/Proactor | [网络系统阅读批注](/posts/linux-kernel-network-system/)、[网络系统、socket 与收发包路径](/posts/linux-kernel-chapter-10-network-stack/) |
-| 9 | Linux 命令 | 系统、进程、内存、文件、网络观测命令 | [Linux 命令阅读批注](/posts/linux-kernel-commands/)、[环境与观察工具](/posts/linux-kernel-chapter-0-observation-tools/) |
-| 10 | 额外 Linux 内核专题 | namespace/cgroup、tracing/perf/BPF、内核源码开发、横切路径实验 | [额外专题总览](/posts/linux-kernel-extra-topics/)、[namespace/cgroup](/posts/linux-kernel-chapter-11-namespace-cgroup/)、[tracing/perf/BPF](/posts/linux-kernel-chapter-12-tracing-bpf/)、[内核开发方法](/posts/linux-kernel-chapter-13-kernel-development/) |
+| 3 | 内存管理 | 虚拟内存、分段、分页、多级页表、TLB、Linux 内存管理 | [内存管理阅读批注](/posts/linux-kernel-memory-management/) |
+| 4 | 进程与线程 | 进程状态、PCB、上下文切换、线程、IPC、同步、死锁 | [进程与线程阅读批注](/posts/linux-kernel-process-thread/) |
+| 5 | 调度算法 | 进程调度、页面置换、磁盘调度；Linux 调度器放在批注里 | [调度算法阅读批注](/posts/linux-kernel-scheduling-algorithms/) |
+| 6 | 文件系统 | VFS、fd、inode、目录项、page cache、文件 I/O | [文件系统阅读批注](/posts/linux-kernel-filesystem/) |
+| 7 | 设备管理 | 设备控制器、驱动、中断、块层、I/O 软件分层 | [设备管理阅读批注](/posts/linux-kernel-device-management/) |
+| 8 | 网络系统 | Linux 收发包、socket、I/O 多路复用、Reactor/Proactor | [网络系统阅读批注](/posts/linux-kernel-network-system/) |
+| 9 | Linux 命令 | 系统、进程、内存、文件、网络观测命令 | [Linux 命令阅读批注](/posts/linux-kernel-commands/) |
+| 10 | 额外 Linux 内核专题 | namespace/cgroup、tracing/perf/BPF、内核源码开发、横切路径实验 | [额外专题总览](/posts/linux-kernel-extra-topics/) |
 
-现有入口文章后续会按这个顺序重排和拆分。当前文件名里的编号仅用于链接兼容。
+公开文章只保留这套主线。更细的横切路径和 Linux 源码细节，后续并入对应主线文章或额外专题。
 
 ## 章节拆分原则
 
