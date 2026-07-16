@@ -7,6 +7,8 @@ description: Write, edit, classify, and maintain posts for the Hesperine GitHub 
 
 Use this skill for this repository's Chirpy/Jekyll blog.
 
+For paper reading or paper-centered posts, also read `.agents/skills/hesperine-paper-reading-blog/SKILL.md`. Keep paper-analysis workflow there and site-wide publishing rules here.
+
 ## Local Rules
 
 - Posts live in `_posts/` and use `YYYY-MM-DD-slug.md`.
@@ -70,7 +72,6 @@ Minimal examples:
 
 - Write in Chinese by default.
 - Prefer personal blog voice over generic instruction-manual voice.
-- For paper-reading notes, keep analytical judgments neutral unless the user explicitly states them. Avoid phrasing such as `我认为`, `我觉得`, `我的 reviewer 视角`, `从审稿人角度看`, or `reviewer 式评价` when the judgment is the assistant's reading; prefer `这篇论文...`, `评价这篇论文时...`, or `可以这样概括...`.
 - In publishable drafts, omit process filler such as `概读之后，这篇有必要精读`, `这篇值得精读`, or explanations that only report the reading workflow. Start with the substantive claim or evidence instead.
 - Avoid AI-sounding section names like `适用场景`, `不适合`, `关键风险` unless genuinely needed.
 - Keep roadmap/meta-planning content out of publishable prose by default. Reading routes, why a topic follows another topic, future article plans, and similar author notes may be kept in Jekyll/Liquid comments (`{% comment %} ... {% endcomment %}`) for editing context, but should not appear as visible Blog headings, body text, or generated HTML unless the user explicitly asks.

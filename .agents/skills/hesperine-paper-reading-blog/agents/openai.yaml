@@ -1,0 +1,4 @@
+interface:
+  display_name: "Hesperine Paper Reading Blog"
+  short_description: "Turn papers into clear, rigorous Hesperine blog posts"
+  default_prompt: "Use $hesperine-paper-reading-blog to read this paper and write a clear, evidence-grounded blog post."
