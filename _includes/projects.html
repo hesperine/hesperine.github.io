@@ -1,0 +1,83 @@
+<link rel="stylesheet" href="{{ '/assets/css/projects.css' | relative_url }}">
+
+<div class="projects-page">
+  <div class="projects-intro">
+    <p class="projects-eyebrow">HESPERINE · PROJECTS</p>
+    <p class="projects-lead">{{ site.data.projects.intro | escape }}</p>
+    <nav class="projects-nav" aria-label="项目页导航">
+      <a href="#featured-projects">我的项目 <span>{{ site.data.projects.featured.size }}</span></a>
+      <a href="#open-source">开源关注</a>
+      <a class="projects-profile" href="{{ site.data.projects.profile }}">GitHub <span aria-hidden="true">↗</span></a>
+    </nav>
+  </div>
+
+  <section aria-labelledby="featured-projects">
+    <div class="projects-section-heading">
+      <h2 id="featured-projects">我的项目</h2>
+      <span>工具与内容</span>
+    </div>
+    <div class="projects-grid">
+      {% for project in site.data.projects.featured %}
+      <article class="project-card" aria-labelledby="project-{{ project.id }}">
+        <figure class="project-figure">
+          <img src="{{ project.image | relative_url }}" alt="{{ project.image_alt | escape }}" width="1280" height="720" loading="lazy" decoding="async">
+          <figcaption>{{ project.image_caption | escape }}</figcaption>
+        </figure>
+        <div class="project-body">
+          <div class="project-meta"><span>{{ project.category | escape }}</span><span class="project-status">{{ project.status | escape }}</span></div>
+          <h3 id="project-{{ project.id }}">{{ project.name | escape }}</h3>
+          <p class="project-subtitle">{{ project.subtitle | escape }}</p>
+          <p class="project-description">{{ project.description | escape }}</p>
+          <ul class="project-features">
+            {% for feature in project.features %}
+            <li>{{ feature | escape }}</li>
+            {% endfor %}
+          </ul>
+          <ul class="project-tags" aria-label="{{ project.name | escape }} 技术与主题">
+            {% for tag in project.tags %}
+            <li>{{ tag | escape }}</li>
+            {% endfor %}
+          </ul>
+          <div class="project-actions">
+            <a class="project-primary-link" href="{{ project.website }}">{{ project.image_caption | escape }} <span aria-hidden="true">↗</span></a>
+            <a class="project-source-link" href="{{ project.repository }}">查看源码 <span aria-hidden="true">↗</span></a>
+          </div>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+  </section>
+
+  <aside class="projects-site" aria-label="关于本站">
+    <span class="projects-site-mark" aria-hidden="true">H.</span>
+    <div>
+      <p class="projects-site-title">{{ site.data.projects.site.name | escape }} <span>· 本站</span></p>
+      <p>{{ site.data.projects.site.description | escape }}</p>
+      <a href="{{ site.data.projects.site.repository }}">博客源码 <span aria-hidden="true">↗</span></a>
+    </div>
+  </aside>
+
+  <section class="projects-forks" aria-labelledby="open-source">
+    <div class="projects-section-heading">
+      <h2 id="open-source">开源关注</h2>
+      <span class="projects-fork-label">Forks</span>
+    </div>
+    <p class="projects-section-note">一些关注的开源仓库。下面的链接指向我的 Fork，原项目作者与上游仓库单独列出。</p>
+    <div class="projects-fork-grid">
+      {% for group in site.data.projects.fork_groups %}
+      <div class="projects-fork-group">
+        <h3>{{ group.name | escape }}</h3>
+        <ul>
+          {% for repository in group.repositories %}
+          <li>
+            <a class="projects-fork-name" href="{{ repository.fork }}">{{ repository.name | escape }} <span aria-hidden="true">↗</span></a>
+            <p>{{ repository.description | escape }}</p>
+            <a class="projects-upstream" href="https://github.com/{{ repository.upstream }}">上游 · {{ repository.upstream | escape }}</a>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+</div>

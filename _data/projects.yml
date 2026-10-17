@@ -1,0 +1,89 @@
+intro: 这里收录我围绕游戏资讯、剧情阅读和个人记录做的小项目，也放一些关注的开源仓库。
+profile: https://github.com/hesperine
+
+featured:
+  - id: herald
+    name: HERALD
+    subtitle: 游戏联动预告与提醒信使
+    category: 资讯工具
+    status: 早期版本
+    description: 把分散在官方社区的游戏联动公告整理成活动，提醒预约、开售、抽签和活动开始。
+    features:
+      - 汇集米游社、森空岛与补充的微博官号信息，保留原始来源。
+      - 合并同一企划下的活动，把日期和参与入口整理到一起。
+      - 通过每日邮件汇总与静态网页查看新公告和到期提醒。
+    tags: [Python, GitHub Actions, AI 信息提取]
+    website: https://hesperine.github.io/Herald/
+    repository: https://github.com/hesperine/Herald
+    image: /assets/img/projects/herald.png
+    image_alt: HERALD 活动页面，展示游戏联动企划与搜索入口。
+    image_caption: 活动卡片
+
+  - id: genshin-stories
+    name: 原神剧情编年
+    subtitle: Genshin Stories
+    category: 剧情阅读
+    status: 在线阅读
+    description: 按版本整理主线与重要世界任务，配上一个可以翻页、调整阅读样式和保存进度的网页阅读器。
+    features:
+      - 按版本与章节阅读，梳理主线和影响世界观的重要支线。
+      - 叙述限于对应版本已公开的信息，未读标题先隐藏。
+      - 支持白天／夜晚主题、阅读进度保存与记录导入导出。
+    tags: [JavaScript, 静态阅读器, 内容整理]
+    website: https://hesperine.github.io/Genshin-Stories/
+    repository: https://github.com/hesperine/Genshin-Stories
+    image: /assets/img/projects/genshin-stories.png
+    image_alt: 原神剧情编年阅读器，展示版本目录与剧情正文。
+    image_caption: 剧情阅读器
+
+site:
+  name: Hesperine Blog
+  description: 这个博客记录学习笔记、论文阅读、项目实践和一些随笔，基于 Jekyll 与 Chirpy 搭建。
+  repository: https://github.com/hesperine/hesperine.github.io
+
+# Forks are links to upstream work, not claims of authorship or contribution.
+fork_groups:
+  - name: 游戏与自动化
+    repositories:
+      - name: Stronghold-Protocol
+        description: 浏览器自走棋塔防与合作联机。
+        fork: https://github.com/hesperine/Stronghold-Protocol
+        upstream: sganggs/Stronghold-Protocol
+      - name: MaaAssistantArknights
+        description: 明日方舟日常自动化助手。
+        fork: https://github.com/hesperine/MaaAssistantArknights
+        upstream: MaaAssistantArknights/MaaAssistantArknights
+      - name: MaaEnd
+        description: 明日方舟：终末地自动化工具。
+        fork: https://github.com/hesperine/MaaEnd
+        upstream: MaaEnd/MaaEnd
+      - name: Auto_Simulated_Universe
+        description: 星穹铁道模拟宇宙自动化。
+        fork: https://github.com/hesperine/Auto_Simulated_Universe
+        upstream: CHNZYX/Auto_Simulated_Universe
+  - name: 代码理解
+    repositories:
+      - name: rea
+        description: 面向 Agent 的应用与程序逆向分析工具。
+        fork: https://github.com/hesperine/rea
+        upstream: morluto/rea
+      - name: gitdiagram
+        description: 把 GitHub 仓库转换为交互式架构图。
+        fork: https://github.com/hesperine/gitdiagram
+        upstream: ahmedkhaleel2004/gitdiagram
+  - name: 生活资料
+    repositories:
+      - name: HowToLiveBetter
+        description: 高性价比人生指南与资料索引。
+        fork: https://github.com/hesperine/HowToLiveBetter
+        upstream: eternity4719/HowToLiveBetter
+      - name: how-to-live-better
+        description: 指南的单文件在线阅读页。
+        fork: https://github.com/hesperine/how-to-live-better
+        upstream: cdyforever/how-to-live-better
+  - name: 学习资料
+    repositories:
+      - name: ysj-Learning
+        description: 学习过程中的代码与资料记录。
+        fork: https://github.com/hesperine/ysj-Learning
+        upstream: ysj1173886760/Learning
