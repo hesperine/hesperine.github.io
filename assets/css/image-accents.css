@@ -1,0 +1,45 @@
+/*
+ * The image-accents module supplies image-derived colors. Without a usable
+ * image or JavaScript, these roles fall back to Chirpy's neutral navigation.
+ * Reading surfaces keep Chirpy's original colors.
+ */
+html {
+  --image-accent: var(--sidebar-active-color);
+  --image-avatar-ring: transparent;
+  --image-sidebar-end: transparent;
+}
+
+#sidebar {
+  background-image: linear-gradient(165deg, transparent 58%, var(--image-sidebar-end));
+}
+
+#sidebar #avatar {
+  box-shadow: 0 0 0 5px var(--image-avatar-ring);
+}
+
+#sidebar ul li.nav-item.active .nav-link,
+#sidebar ul li.nav-item.active .nav-link i {
+  color: var(--image-accent);
+}
+
+/* Keep each native selector's specificity so archive/tag/control rules still win. */
+:where(html[data-image-accents-source]:not([data-image-accents-source="none"])) #page-category a:is(:hover, :focus-visible),
+:where(html[data-image-accents-source]:not([data-image-accents-source="none"])) #page-tag a:is(:hover, :focus-visible),
+:where(html[data-image-accents-source]:not([data-image-accents-source="none"])) #access-lastmod a:is(:hover, :focus-visible),
+:where(html[data-image-accents-source]:not([data-image-accents-source="none"])) .post-tail-wrapper .license-wrapper > a:is(:hover, :focus-visible),
+:where(html[data-image-accents-source]:not([data-image-accents-source="none"])) .post-edit > a:is(:hover, :focus-visible),
+:where(html[data-image-accents-source]:not([data-image-accents-source="none"])) #search-results a:is(:hover, :focus-visible),
+:where(html[data-image-accents-source]:not([data-image-accents-source="none"])) footer a:is(:hover, :focus-visible),
+:where(html[data-image-accents-source]:not([data-image-accents-source="none"])) #topbar #breadcrumb a:is(:hover, :focus-visible),
+:where(html[data-image-accents-source]:not([data-image-accents-source="none"])) .post-meta a:not([class]):is(:hover, :focus-visible),
+:where(html[data-image-accents-source]:not([data-image-accents-source="none"])) .content a:not(.img-link):is(:hover, :focus-visible) {
+  color: var(--link-hover-color) !important;
+  border-bottom-color: currentColor;
+}
+
+/* Keep the preview's visual effect contained even on narrow screens. */
+@media (prefers-reduced-motion: reduce) {
+  #sidebar #avatar {
+    transition: none;
+  }
+}
